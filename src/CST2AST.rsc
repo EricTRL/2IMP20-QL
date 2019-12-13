@@ -38,11 +38,14 @@ L = [cst2ast(q) | (Question q <- questions)];
 AQuestion cst2ast(Question q) {
 	switch(q) {
 		case (Question)`<Expr question> <Expr identifier> : <Type varType>`: {
-			//println(question);
+			println(cst2ast(question));
+			println(cst2ast(identifier));
+			println(cst2ast(varType));
+			println(q@\loc);
 			//println(identifier);
 			//println(cst2ast((Expr)`<Str question>`));
 			//println(cst2ast((Expr)`<Id identifier>`));
-			return simpleQuestion(cst2ast(question), cst2ast(identifier), cst2ast(varType), src=question@\loc);
+			return simpleQuestion(cst2ast(question), cst2ast(identifier), cst2ast(varType), src=q@\loc);
 		}
 			//return simpleQuestion(cst2ast(question), cst2ast(identifier), cst2ast(varType), src=question@\loc);
 		case (Question)`<Str question> <Id identifier> : <Type varType> = <Expr e>`:
@@ -61,7 +64,7 @@ AQuestion cst2ast(Question q) {
 AExpr cst2ast(Expr e) {
   switch (e) {
     case (Expr)`<Id x>`: {println(e); 
-    return ref("<x>", src=x@\loc);}
+    return ref(id("<x>"), src=x@\loc);}
     case (Expr)`<Expr lhs> * <Expr rhs>`: return multiplication(cst2ast(lhs), cst2ast(rhs), src=e@\loc);
     case (Expr)`! <Expr e>`: return negation(cst2ast(e), src=e@\loc);
     case (Expr)`<Expr lhs> / <Expr rhs>`: return division(cst2ast(lhs), cst2ast(rhs), src=e@\loc);
