@@ -21,41 +21,27 @@ import IO;
 
 AForm cst2ast(start[Form] sf) {
   Form f = sf.top; // remove layout before and after form
-  list[AQuestion] aqs = [];
-  for (Question q <- f.questions) {
-  	aqs = aqs + [cst2ast(q)];
-  }
-  AForm result = form("<f.name>", aqs, src=f@\loc);
+  AForm result = form("<f.name>", toList(f.questions), src=f@\loc);
   println(result);
   return result; 
 }
 
 list[AQuestion] toList(questions) {
-L = [cst2ast(q) | (Question q <- questions)];
 	return [cst2ast(q) | (Question q <- questions)];
 }
 
 AQuestion cst2ast(Question q) {
 	switch(q) {
-		case (Question)`<Expr question> <Expr identifier> : <Type varType>`: {
-			println(cst2ast(question));
-			println(cst2ast(identifier));
-			println(cst2ast(varType));
-			println(q@\loc);
-			//println(identifier);
-			//println(cst2ast((Expr)`<Str question>`));
-			//println(cst2ast((Expr)`<Id identifier>`));
-			return simpleQuestion(cst2ast(question), cst2ast(identifier), cst2ast(varType), src=q@\loc);
-		}
-			//return simpleQuestion(cst2ast(question), cst2ast(identifier), cst2ast(varType), src=question@\loc);
+		case (Question)`<Str question> <Id identifier> : <Type varType>`:
+			return simpleQuestion(cst2ast((Expr)`<Str question>`), cst2ast((Expr)`<Id identifier>`), cst2ast(varType), src=q@\loc);
 		case (Question)`<Str question> <Id identifier> : <Type varType> = <Expr e>`:
-			return computedQuestion(cst2ast(question), cst2ast(identifier), cst2ast(varType), cst2ast(e), src=question@\loc);
+			return computedQuestion(cst2ast((Expr)`<Str question>`), cst2ast((Expr)`<Id identifier>`), cst2ast(varType), cst2ast(e), src=q@\loc);
 		case (Question)`{ <Question* questions> }`: 
-			return block([]);
-		case (Question)`if <Expr cond> { <Question* thenPart> } else { <Question* elsePart> }`:
-			return ifThenElse(cst2ast(cond), [], []);
-		case (Question)`if <Expr cond> { <Question* thenPart> }`:
-			return ifThen(cst2ast(cond), []);
+			return block(toList(questions));
+		case (Question)`if (<Expr cond>) { <Question* thenPart> } else { <Question* elsePart> }`:
+			return ifThenElse(cst2ast(cond), toList(thenPart), toList(elsePart));
+		case (Question)`if (<Expr cond>) { <Question* thenPart> }`:
+			return ifThen(cst2ast(cond), toList(thenPart));
 		default:
 			throw "Unhandled question: <q>";
 	}
@@ -63,8 +49,8 @@ AQuestion cst2ast(Question q) {
 
 AExpr cst2ast(Expr e) {
   switch (e) {
-    case (Expr)`<Id x>`: {println(e); 
-    return ref(id("<x>"), src=x@\loc);}
+    case (Expr)`<Id x>`: return ref(id("<x>"), src=x@\loc);
+    case (Expr)`(<Expr x>)`: return cst2ast(x, src=e@\loc);
     case (Expr)`<Expr lhs> * <Expr rhs>`: return multiplication(cst2ast(lhs), cst2ast(rhs), src=e@\loc);
     case (Expr)`! <Expr e>`: return negation(cst2ast(e), src=e@\loc);
     case (Expr)`<Expr lhs> / <Expr rhs>`: return division(cst2ast(lhs), cst2ast(rhs), src=e@\loc);
@@ -83,7 +69,7 @@ AExpr cst2ast(Expr e) {
     case (Expr)`<Str s>`: return string("<s>", src=s@\loc); 
     // etc.
     
-    default: {println("test"); throw "Unhandled expression: <e>";}
+    default: throw "Unhandled expression: <e>";
   }
 }
 

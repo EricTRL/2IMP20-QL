@@ -12,18 +12,18 @@ start syntax Form
 
 // TODO: question, computed question, block, if-then-else, if-then
 syntax Question
-  = simpleQuestion: Expr question Expr identifier ":" Type varType
-  | computedQuestion: Expr question Id identifier ":" Type varType "=" Expr e
+  = simpleQuestion: Str question Id identifier ":" Type varType
+  | computedQuestion: Str question Id identifier ":" Type varType "=" Expr e
   | block: "{" Question* questions "}"
-  | ifThenElse: "if" Expr cond "{" Question* thenPart "}" "else" "{" Question* elsePart "}"
-  | ifThen: "if" Expr cond "{" Question* questions "}" 
+  | ifThenElse: "if (" Expr cond ") {" Question* thenPart "}" "else" "{" Question* elsePart "}"
+  | ifThen: "if (" Expr cond ") {" Question* questions "}" 
   ;  
 
 // TODO: +, -, *, /, &&, ||, !, >, <, <=, >=, ==, !=, literals (bool, int, str)
 // Think about disambiguation using priorities and associativity
 // and use C/Java style precedence rules (look it up on the internet)
 syntax Expr 
-  = var: Id \ "true" \ "false" // true/false are reserved keywords.
+  = Id \ "true" \ "false" // true/false are reserved keywords.
   | boolean: Bool b
   | integer: Int i
   | string: Str s

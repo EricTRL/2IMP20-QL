@@ -13,7 +13,7 @@ data AForm(loc src = |tmp:///|)
 
 data AQuestion(loc src = |tmp:///|)
   = simpleQuestion(AExpr question, AExpr identifier, AType varType)
-  | computedQuestion(str question, AId identifier, AType varType, AExpr e)
+  | computedQuestion(AExpr question, AExpr identifier, AType varType, AExpr e)
   | block(list[AQuestion] questions)
   | ifThenElse(AExpr cond, list[AQuestion] thenpart, list[AQuestion] elsepart)
   | ifThen(AExpr cond, list[AQuestion] questions)

@@ -1,4 +1,4 @@
 form taxOfficeExample {
-	"test"  
+	"5 < 5"
 	x : boolean
 }
