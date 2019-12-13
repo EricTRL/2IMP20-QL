@@ -1,0 +1,8 @@
+/bin/
+/.settings
+/examples/*.html
+/examples/*.js
+
+*.js
+*.html
+
