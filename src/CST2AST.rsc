@@ -6,6 +6,8 @@ import AST;
 import ParseTree;
 import String;
 import Boolean;
+import IO;
+
 
 /*
  * Implement a mapping from concrete syntax trees (CSTs) to abstract syntax trees (ASTs)
@@ -19,25 +21,38 @@ import Boolean;
 
 AForm cst2ast(start[Form] sf) {
   Form f = sf.top; // remove layout before and after form
-  return form("", [], src=f@\loc); 
+  list[AQuestion] aqs = [];
+  for (Question q <- f.questions) {
+  	aqs = aqs + [cst2ast(q)];
+  }
+  AForm result = form("<f.name>", aqs, src=f@\loc);
+  println(result);
+  return result; 
 }
 
 list[AQuestion] toList(questions) {
-	return for(Question q <- questions) append cst2ast(q);
+L = [cst2ast(q) | (Question q <- questions)];
+	return [cst2ast(q) | (Question q <- questions)];
 }
 
 AQuestion cst2ast(Question q) {
 	switch(q) {
-		case (Question)`<Str question> <Id identifier> ":" <Type varType>`:
+		case (Question)`<Expr question> <Expr identifier> : <Type varType>`: {
+			//println(question);
+			//println(identifier);
+			//println(cst2ast((Expr)`<Str question>`));
+			//println(cst2ast((Expr)`<Id identifier>`));
 			return simpleQuestion(cst2ast(question), cst2ast(identifier), cst2ast(varType), src=question@\loc);
-		case (Question)`<Str question> <Id identifier> ":" <Type varType> "=" <Expr e>`:
+		}
+			//return simpleQuestion(cst2ast(question), cst2ast(identifier), cst2ast(varType), src=question@\loc);
+		case (Question)`<Str question> <Id identifier> : <Type varType> = <Expr e>`:
 			return computedQuestion(cst2ast(question), cst2ast(identifier), cst2ast(varType), cst2ast(e), src=question@\loc);
-		case (Question)`"{" <Question* questions> "}"`: 
-			return block(toList(questions));
-		case (Question)`"if" <Expr cond> "{" <Question* thenPart> "}" "else" "{" <Question* elsePart> "}"`:
-			return ifThenElse(cst2ast(cond), toList(thenPart), toList(elsePart));
-		case (Question)`"if" <Expr cond> "{" <Question* thenPart> "}"`:
-			return ifThen(cst2ast(cond), toList(thenPart));
+		case (Question)`{ <Question* questions> }`: 
+			return block([]);
+		case (Question)`if <Expr cond> { <Question* thenPart> } else { <Question* elsePart> }`:
+			return ifThenElse(cst2ast(cond), [], []);
+		case (Question)`if <Expr cond> { <Question* thenPart> }`:
+			return ifThen(cst2ast(cond), []);
 		default:
 			throw "Unhandled question: <q>";
 	}
@@ -45,34 +60,35 @@ AQuestion cst2ast(Question q) {
 
 AExpr cst2ast(Expr e) {
   switch (e) {
-    case (Expr)`<Id x>`: return ref("<x>", src=x@\loc);
-    case (Expr)`<Expr lhs> "*" <Expr rhs>`: return multiplication(cst2ast(lhs), cst2ast(rhs), src=e@\loc);
-    case (Expr)`"!" <Expr e>`: return negation(cst2ast(e), src=e@\loc);
-    case (Expr)`<Expr lhs> "/" <Expr rhs>`: return division(cst2ast(lhs), cst2ast(rhs), src=e@\loc);
-    case (Expr)`<Expr lhs> "+" <Expr rhs>`: return addition(cst2ast(lhs), cst2ast(rhs), src=e@\loc);
-    case (Expr)`<Expr lhs> "-" <Expr rhs>`: return subtraction(cst2ast(lhs), cst2ast(rhs), src=e@\loc);
-    case (Expr)`<Expr lhs> "\<" <Expr rhs>`: return smallerThan(cst2ast(lhs), cst2ast(rhs), src=e@\loc);
-    case (Expr)`<Expr lhs> "\>" <Expr rhs>`: return greaterThan(cst2ast(lhs), cst2ast(rhs), src=e@\loc);
-    case (Expr)`<Expr lhs> "\<=" <Expr rhs>`: return leq(cst2ast(lhs), cst2ast(rhs), src=e@\loc);
-    case (Expr)`<Expr lhs> "\>=" <Expr rhs>`: return geq(cst2ast(lhs), cst2ast(rhs), src=e@\loc);
-    case (Expr)`<Expr lhs> "==" <Expr rhs>`: return eq(cst2ast(lhs), cst2ast(rhs), src=e@\loc);
-    case (Expr)`<Expr lhs> "!=" <Expr rhs>`: return neq(cst2ast(lhs), cst2ast(rhs), src=e@\loc);
-    case (Expr)`<Expr lhs> "&&" <Expr rhs>`: return and(cst2ast(lhs), cst2ast(rhs), src=e@\loc);
-    case (Expr)`<Expr lhs> "||" <Expr rhs>`: return or(cst2ast(lhs), cst2ast(rhs), src=e@\loc);
+    case (Expr)`<Id x>`: {println(e); 
+    return ref("<x>", src=x@\loc);}
+    case (Expr)`<Expr lhs> * <Expr rhs>`: return multiplication(cst2ast(lhs), cst2ast(rhs), src=e@\loc);
+    case (Expr)`! <Expr e>`: return negation(cst2ast(e), src=e@\loc);
+    case (Expr)`<Expr lhs> / <Expr rhs>`: return division(cst2ast(lhs), cst2ast(rhs), src=e@\loc);
+    case (Expr)`<Expr lhs> + <Expr rhs>`: return addition(cst2ast(lhs), cst2ast(rhs), src=e@\loc);
+    case (Expr)`<Expr lhs> - <Expr rhs>`: return subtraction(cst2ast(lhs), cst2ast(rhs), src=e@\loc);
+    case (Expr)`<Expr lhs> \< <Expr rhs>`: return smallerThan(cst2ast(lhs), cst2ast(rhs), src=e@\loc);
+    case (Expr)`<Expr lhs> \> <Expr rhs>`: return greaterThan(cst2ast(lhs), cst2ast(rhs), src=e@\loc);
+    case (Expr)`<Expr lhs> \<= <Expr rhs>`: return leq(cst2ast(lhs), cst2ast(rhs), src=e@\loc);
+    case (Expr)`<Expr lhs> \>= <Expr rhs>`: return geq(cst2ast(lhs), cst2ast(rhs), src=e@\loc);
+    case (Expr)`<Expr lhs> == <Expr rhs>`: return eq(cst2ast(lhs), cst2ast(rhs), src=e@\loc);
+    case (Expr)`<Expr lhs> != <Expr rhs>`: return neq(cst2ast(lhs), cst2ast(rhs), src=e@\loc);
+    case (Expr)`<Expr lhs> && <Expr rhs>`: return and(cst2ast(lhs), cst2ast(rhs), src=e@\loc);
+    case (Expr)`<Expr lhs> || <Expr rhs>`: return or(cst2ast(lhs), cst2ast(rhs), src=e@\loc);
     case (Expr)`<Bool b>`: return boolean(fromString("<b>"), src=b@\loc);
     case (Expr)`<Int i>`: return integer(toInt("<i>"), src=i@\loc);
     case (Expr)`<Str s>`: return string("<s>", src=s@\loc); 
     // etc.
     
-    default: throw "Unhandled expression: <e>";
+    default: {println("test"); throw "Unhandled expression: <e>";}
   }
 }
 
 AType cst2ast(Type t) {
 	switch (t) {
-		case (Type)`"boolean"<Type b>`: return boolean(src=b@\loc);
-		case (Type)`"integer"<Type i>`: return integer(src=i@\loc);
-		case (Type)`"string"<Type s>`: return string(src=s@\loc);
+		case (Type)`boolean`: return boolean(src=t@\loc);
+		case (Type)`integer`: return integer(src=t@\loc);
+		case (Type)`string`: return string(src=t@\loc);
 		default: throw "Unhandled type: <t>";
 	}
 }

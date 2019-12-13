@@ -12,8 +12,8 @@ start syntax Form
 
 // TODO: question, computed question, block, if-then-else, if-then
 syntax Question
-  = simpleQuestion: Str question Id identifier ":" Type varType
-  | computedQuestion: Str question Id identifier ":" Type varType "=" Expr e
+  = simpleQuestion: Expr question Expr identifier ":" Type varType
+  | computedQuestion: Expr question Expr identifier ":" Type varType "=" Expr e
   | block: "{" Question* questions "}"
   | ifThenElse: "if" Expr cond "{" Question* thenPart "}" "else" "{" Question* elsePart "}"
   | ifThen: "if" Expr cond "{" Question* questions "}" 
@@ -23,7 +23,9 @@ syntax Question
 // Think about disambiguation using priorities and associativity
 // and use C/Java style precedence rules (look it up on the internet)
 syntax Expr 
-  = Id \ "true" \ "false" // true/false are reserved keywords.
+  = boolean: Bool b
+  | integer: Int i
+  | string: Str s
   | bracket "(" Expr e ")" 
   > non-assoc (negation: "!" Expr e
   				) //TODO: min-getallen
@@ -43,9 +45,7 @@ syntax Expr
   			)
   > left (and: Expr lhs "&&" Expr rhs)
   > left (or: Expr lhs "||" Expr rhs)
-  | boolean: Bool b
-  | integer: Int i
-  | string: Str s
+  | Id \ "true" \ "false" // true/false are reserved keywords.
   ;
   
 syntax Type
