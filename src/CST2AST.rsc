@@ -22,7 +22,7 @@ import IO;
 AForm cst2ast(start[Form] sf) {
   Form f = sf.top; // remove layout before and after form
   AForm result = form("<f.name>", toList(f.questions), src=f@\loc);
-  println(result);
+  //println(result);
   return result; 
 }
 
@@ -60,13 +60,13 @@ AExpr cst2ast(Expr e) {
     case (Expr)`<Expr lhs> \> <Expr rhs>`: return greaterThan(cst2ast(lhs), cst2ast(rhs), src=e@\loc);
     case (Expr)`<Expr lhs> \<= <Expr rhs>`: return leq(cst2ast(lhs), cst2ast(rhs), src=e@\loc);
     case (Expr)`<Expr lhs> \>= <Expr rhs>`: return geq(cst2ast(lhs), cst2ast(rhs), src=e@\loc);
-    case (Expr)`<Expr lhs> == <Expr rhs>`: return eq(cst2ast(lhs), cst2ast(rhs), src=e@\loc);
+    case (Expr)`<Expr lhs> == <Expr rhs>`: return equal(cst2ast(lhs), cst2ast(rhs), src=e@\loc);
     case (Expr)`<Expr lhs> != <Expr rhs>`: return neq(cst2ast(lhs), cst2ast(rhs), src=e@\loc);
     case (Expr)`<Expr lhs> && <Expr rhs>`: return and(cst2ast(lhs), cst2ast(rhs), src=e@\loc);
     case (Expr)`<Expr lhs> || <Expr rhs>`: return or(cst2ast(lhs), cst2ast(rhs), src=e@\loc);
-    case (Expr)`<Bool b>`: return boolean(fromString("<b>"), src=b@\loc);
-    case (Expr)`<Int i>`: return integer(toInt("<i>"), src=i@\loc);
-    case (Expr)`<Str s>`: return string("<s>", src=s@\loc); 
+    case (Expr)`<Bool b>`: return bln(fromString("<b>"), src=b@\loc);
+    case (Expr)`<Int i>`: return intgr(toInt("<i>"), src=i@\loc);
+    case (Expr)`<Str s>`: return strng("<s>", src=s@\loc); 
     // etc.
     
     default: throw "Unhandled expression: <e>";

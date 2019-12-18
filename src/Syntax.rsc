@@ -24,9 +24,9 @@ syntax Question
 // and use C/Java style precedence rules (look it up on the internet)
 syntax Expr 
   = Id \ "true" \ "false" // true/false are reserved keywords.
-  | boolean: Bool b
-  | integer: Int i
-  | string: Str s
+  | bln: Bool b
+  | intgr: Int i
+  | strng: Str s
   | bracket "(" Expr e ")" 
   > non-assoc (negation: "!" Expr e
   				) //TODO: min-getallen
@@ -41,7 +41,7 @@ syntax Expr
 			  | leq: Expr lhs "\<=" Expr rhs
 			  | geq: Expr lhs "\>=" Expr rhs
 			  )
-  > left	( eq: Expr lhs "==" Expr rhs
+  > left	( equal: Expr lhs "==" Expr rhs
   			| neq: Expr lhs "!=" Expr rhs
   			)
   > left (and: Expr lhs "&&" Expr rhs)

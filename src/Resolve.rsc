@@ -1,5 +1,5 @@
 module Resolve
-
+import IO;
 import AST;
 
 /*
@@ -30,9 +30,9 @@ Use uses(AForm f) {
 	//Maybe we need to apply a strategy to distinguish places where they are used from where they are declared
   result = {};
   visit(f) {
-  	case <Id x>: result = result + <x@\loc, "<x>">;
-  	default: result = result;
+  	case ref(AId id, src = loc u): result = result + <u, "<id.name>">;
   };
+  println(result);
   return result; 
 }
 
@@ -41,8 +41,9 @@ Def defs(AForm f) {
 	//maybe through a strategy we can find distinguish places where they are declared from where they are used
   result = {};
   visit(f) {
-    case <Id x>: result = result + <"<x>", x@\loc>;
-    default: result = result; 
+    case simpleQuestion(AExpr x, ref(AId id, src = loc u), AType varType): result = result + <"<id.name>", u>;
+    case computedQuestion(AExpr x, ref(AId id, src = loc u), AType varType, AExpr e): result = result + <"<id.name>", u>;
   }	
+  //println(result);
   return result; 
 }
