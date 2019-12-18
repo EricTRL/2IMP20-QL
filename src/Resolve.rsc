@@ -32,7 +32,7 @@ Use uses(AForm f) {
   visit(f) {
   	case ref(AId id, src = loc u): result = result + <u, "<id.name>">;
   };
-  println(result);
+  //println(result);
   return result; 
 }
 

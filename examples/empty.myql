@@ -1,17 +1,30 @@
 form taxOfficeExample {
+	//"5 < 5"
+	//x : integer
+	
+	//"computedQuestion"
+	//y : boolean = x == 1
+	
+	//"Can we do it" yesWeCan : boolean = false
+	
+	//if (x) {
+	
+	//}
+	
+	//if (yesWeCan) {
+	
+	//}
+	
 	"5 < 5"
-	x : integer
+	ietsaders: boolean
+	 
+	"differnquestinn"
+	ietsaers: integer
 	
-	"computedQuestion"
-	y : boolean = x == 1
-	
-	"Can we do it" yesWeCan : boolean = false
-	
-	if (x) {
-	
-	}
-	
-	if (yesWeCan) {
-	
+	"differnquestn"
+	acsd: boolean
+	 
+	if (x < 5) {
+		"differnquestn" yesWeCan: boolean = 3
 	}
 }
