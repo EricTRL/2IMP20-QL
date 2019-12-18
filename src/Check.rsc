@@ -16,7 +16,7 @@ Type ATypeToDataType(AType t) {
 	switch(t) {
 		case string(): return tstr();
 		case integer(): return tint();
-		case boolean(): return tstr();
+		case boolean(): return tbool();
 		default: return tunknown();
 	}
 }
@@ -70,29 +70,43 @@ void checkExprType() {
 // - the declared type computed questions should match the type of the expression.
 set[Message] check(AQuestion q, TEnv tenv, UseDef useDef) {
   	result = {};
-  	switch(q) {
+  	//println(q);
+  	switch(q) {  			
     	case simpleQuestion(strng(sq), ref(AId id), AType var, src = loc qloc): {
-    		println("simple");
+    	//	println("simple");
     		for (<loc def, str name, str label, Type t> <- tenv) {
     			result += checkName(name, id, t, var, def);
 				result += checkLabel(label, sq, def, qloc);	
 	    	}
 		}
-		//case computedQuestion(strng(sq), ref(AId id), AType var, AExpr e, src = loc qloc): {
-		//	println("computed");
-		//	for (<loc def, str name, str label, Type t> <- tenv) {
-		//		result += checkName(name, id, t, var, def);
-		//		result += checkLabel(label, sq, def, qloc);	
-		//		// the declared type computed questions should match the type of the expression.
-		//		if (def == qloc) {
-		//			println(e);
-		//			println(ATypeToDataType(e));
-		//			if (ATypeToDataType(e) != t) {
-		//				result = result + error("The expression type should match the question type");
-		//			}
-		//		}
-		//	} 
-		//}
+		case computedQuestion(strng(sq), ref(AId id), AType var, AExpr e, src = loc qloc): {
+			println("computed");
+			for (<loc def, str name, str label, Type t> <- tenv) {
+				result += checkName(name, id, t, var, def);
+				result += checkLabel(label, sq, def, qloc);	
+				// the declared type computed questions should match the type of the expression.
+				//if (def == qloc) {
+				////	println(e);
+				////	println(ATypeToDataType(e));
+				//	if (ATypeToDataType(e) != t) {
+				//		result = result + error("The expression type should match the question type");
+				//	}
+				//}
+			} 
+		}
+		case ifThenElse(AExpr cond, list[AQuestion] thenpart, list[AQuestion] elsepart): { 
+  			for (AQuestion question <- q.thenpart + q.elsepart) {
+  				result += check(question, tenv, useDef);
+  			}
+  		}
+		default: {
+			println("Hij fired niet");
+			println(q.questions);
+  			for (AQuestion question <- q.questions) {
+  				println("entering loop");
+  				result += check(question, tenv, useDef);
+  			}
+  		}
   	}
     
   
@@ -121,22 +135,22 @@ Type typeOf(AExpr e, TEnv tenv, UseDef useDef) {
       if (<u, loc d> <- useDef, <d, x, _, Type t> <- tenv) {
         return t;
       }
-    case negation(AExpr e, src = loc u): { return t; }
-    case multiplication(AExpr lhs, AExpr rhs): { return t;}
-    case division(AExpr lhs, AExpr rhs): { return t;}
-    case addition(AExpr lhs, AExpr rhs): { return t; }
-    case subtraction(AExpr lhs, AExpr rhs): {return t;}
-    case smallerThan(AExpr lhs, AExpr rhs): {return t;}
-    case greaterThan(AExpr lhs, AExpr rhs): {return t;}
-    case leq(AExpr lhs, AExpr rhs): {return t;}
-    case geq(AExpr lhs, AExpr rhs): {return t;}
-    case equal(AExpr lhs, AExpr rhs): {return t;}
-    case neq(AExpr lhs, AExpr rhs): {return t;}
-    case and(AExpr lhs, AExpr rhs): {return t;}
-    case or(AExpr lhs, AExpr rhs): {return t;}
-    case bln(bool b): {return t;}
-    case intgr(int i): {return t;}
-    case strng(str s): {return t;}
+    //case negation(AExpr e, src = loc u): { return t; }
+    //case multiplication(AExpr lhs, AExpr rhs): { return t;}
+    //case division(AExpr lhs, AExpr rhs): { return t;}
+    //case addition(AExpr lhs, AExpr rhs): { return t; }
+    //case subtraction(AExpr lhs, AExpr rhs): {return t;}
+    //case smallerThan(AExpr lhs, AExpr rhs): {return t;}
+    //case greaterThan(AExpr lhs, AExpr rhs): {return t;}
+    //case leq(AExpr lhs, AExpr rhs): {return t;}
+    //case geq(AExpr lhs, AExpr rhs): {return t;}
+    //case equal(AExpr lhs, AExpr rhs): {return t;}
+    //case neq(AExpr lhs, AExpr rhs): {return t;}
+    //case and(AExpr lhs, AExpr rhs): {return t;}
+    //case or(AExpr lhs, AExpr rhs): {return t;}
+    //case bln(bool b): {return t;}
+    //case intgr(int i): {return t;}
+    //case strng(str s): {return t;}
     // etc.
   }
   return tunknown(); 
