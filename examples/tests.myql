@@ -212,4 +212,20 @@ form tests {
 			"conditionString" value: integer = 1
 		}
 	}
+	
+	//-------------------------------------------------------------------------------
+	
+	//Test for reserved keywords used as names
+	
+	"Is the name true reserved"
+	true: boolean = true
+	
+	"Is the name false reserved"
+	false: boolean = true
+	
+	"Is the name if reserved"
+	if: string = "" 
+	
+	"Is the name else reserved"
+	else: integer = 1
 }
