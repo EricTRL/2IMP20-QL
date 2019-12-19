@@ -48,7 +48,7 @@ set[Message] check(AForm f, TEnv tenv, UseDef useDef) {
   result = {};
   for (AQuestion q <- f.questions) {
   	result = result + check(q, tenv, useDef);
-  }
+  } 
   return result; 
 }
 
@@ -110,11 +110,20 @@ set[Message] check(AQuestion q, TEnv tenv, UseDef useDef) {
 			} 
 		}
 		case ifThenElse(AExpr cond, list[AQuestion] thenpart, list[AQuestion] elsepart): { 
+  			result += exprTypeError({tbool()}, cond, tenv, useDef, cond.src);
+  			result += check(cond, tenv, useDef);
   			for (AQuestion question <- q.thenpart + q.elsepart) {
   				result += check(question, tenv, useDef);
   			}
   		}
-		default: { // ifThen and block
+		case ifThen(AExpr cond, list[AQuestion] questions): {
+			result += exprTypeError({tbool()}, cond, tenv, useDef, cond.src);
+			result += check(cond, tenv, useDef);
+  			for (AQuestion question <- q.questions) {
+  				result += check(question, tenv, useDef);
+  			}
+  		}
+  		case block(list[AQuestion] questions): {
   			for (AQuestion question <- q.questions) {
   				result += check(question, tenv, useDef);
   			}
@@ -138,8 +147,10 @@ set[Message] check(AExpr e, TEnv tenv, UseDef useDef) {
   set[Message] msgs = {};
   
   switch (e) {
-    case ref(str x, src = loc u):
+    case ref(id(str x), src = loc u): {
+    	println("whoa i got here <useDef[u]>");
       	msgs += { error("Undeclared question", u) | useDef[u] == {} };
+  	}
 	case addition(_, _, src = loc u): {
 		msgs += exprTypeError({tint()}, e, tenv, useDef, u);
 	}
@@ -196,7 +207,6 @@ Type typeOf(AExpr e, TEnv tenv, UseDef useDef) {
   	// ID checking
     case ref(id(str x), src = loc u): {  		
 	  	if (<u, loc d> <- useDef, <d, x, _, Type t> <- tenv) {
-	  		println("???");
 	    	return t;
 	  	}
   	}
@@ -264,10 +274,6 @@ Type typeOf(AExpr e, TEnv tenv, UseDef useDef) {
 	}	
 	case intgr(int i): {
 		return tint();
-	}	
-	default: {
-		println("here <e>");
-		println("None of the above");
 	}
   }
   return tunknown(); 
