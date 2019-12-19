@@ -17,9 +17,13 @@ form taxOfficeExample {
 	
 	//"5 < 5" 
 	//ietsaders: boolean
+	
+	"blah"
+	blah: string = "whoa" 
+	
+	"differnquestinn" 
+	ietsaers: integer = 1 + blah 
 	 
-	"differnquestinn"
-	ietsaers: boolean = 1 + (6 + 4)
 	
 	//"differnquestn"
 	//acsd: boolean

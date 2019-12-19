@@ -83,7 +83,7 @@ set[Message] checkQuestionAndExprType(AExpr e, loc def, loc qloc, TEnv tenv, Use
 	if (def == qloc) {
 		typeOfExpr = typeOf(e, tenv, useDef);
 		if (typeOfExpr != t) {
-			return { error("The expression type (<typeToStr(typeOfExpr) >) should match the question type (<typeToStr(t)>)", qloc) };
+			return { error("The expression type [\"<typeToStr(typeOfExpr)>\"] should match the question type [\"<typeToStr(t)>\"]", e.src) };
 		}
 	}
 	return {};
@@ -123,6 +123,14 @@ set[Message] check(AQuestion q, TEnv tenv, UseDef useDef) {
   return result; 
 }
 
+set[Message] exprTypeError(set[Type] t, AExpr e, TEnv tenv, UseDef useDef, loc u) {
+	typeOfExpr = typeOf(e, tenv, useDef);
+	if (!(typeOfExpr in t)) {
+		return {error("Expression contains incompatible types. Got [\"<typeToStr(typeOfExpr)>\"] expected one of <[typeToStr(expType) | (Type expType <- t)]>", u)};
+	}
+	return {};
+}
+
 // Check operand compatibility with operators.
 // E.g. for an addition node add(lhs, rhs), 
 //   the requirement is that typeOf(lhs) == typeOf(rhs) == tint()
@@ -131,48 +139,67 @@ set[Message] check(AExpr e, TEnv tenv, UseDef useDef) {
   
   switch (e) {
     case ref(str x, src = loc u):
-      msgs += { error("Undeclared question", u) | useDef[u] == {} };
-	case addition(AExpr lhs, AExpr rhs, src = loc u): {
-		if (typeOf(lhs, tenv, useDef) != tint() || typeOf(rhs, tenv, useDef) != tint()) {
-			println("Addition failed!");
-			println(u);
-			println("-- tenv below");
-			println(tenv);
-			println("--- usedef below");
-			println(useDef);
-			msgs += error("The expression type (" + "???" + ") should match the question type (integer)", u);
-		} else {
-			println("Addition passed!");
-		}
-	}	
-	//case intgr(int i): {
-	//	println("Integer base case");
-	//}	
-		// 3 + 5
-		// 4 + 5 + "wow"
-    // etc.
+      	msgs += { error("Undeclared question", u) | useDef[u] == {} };
+	case addition(_, _, src = loc u): {
+		msgs += exprTypeError({tint()}, e, tenv, useDef, u);
+	}
+	case subtraction(_, _, src = loc u): {
+		msgs += exprTypeError({tint()}, e, tenv, useDef, u);
+	}
+	case multiplication(_, _, src = loc u): {
+		msgs += exprTypeError({tint()}, e, tenv, useDef, u);
+	}
+	case division(_, _, src = loc u): {
+		msgs += exprTypeError({tint()}, e, tenv, useDef, u);
+	}
+	case smallerThan(_, _, src = loc u): {
+		msgs += exprTypeError({tint()}, e, tenv, useDef, u);
+	}
+	case greaterThan(_, _, src = loc u): {
+		msgs += exprTypeError({tint()}, e, tenv, useDef, u);
+	}
+	case leq(_, _, src = loc u): {
+		msgs += exprTypeError({tint()}, e, tenv, useDef, u);
+	}
+	case geq(_, _, src = loc u): {
+		msgs += exprTypeError({tint()}, e, tenv, useDef, u);
+	}
+	case and(_, _, src = loc u): {
+		msgs += exprTypeError({tint()}, e, tenv, useDef, u);
+	}
+	case or(_, _, src = loc u): {
+		msgs += exprTypeError({tbool()}, e, tenv, useDef, u);
+	}
+	case negation(_, _, src = loc u): {
+		msgs += exprTypeError({tbool()}, e, tenv, useDef, u);
+	}
+	case equal(_, _, src = loc u): {
+		msgs += exprTypeError({tint(), tbool(), tstr()}, e, tenv, useDef, u);
+	}
+	case neq(_, _, src = loc u): {
+		msgs += exprTypeError({tint(), tbool(), tstr()}, e, tenv, useDef, u);
+	}
   }
-  
   return msgs; 
 }
 
 Type doubleType(Type t, Type returnType, AExpr lhs, AExpr rhs, TEnv tenv, UseDef useDef) {
 	lhsType = typeOf(lhs, tenv, useDef);
 	if (lhsType == t && lhsType == typeOf(rhs, tenv, useDef)) {
-		println("Passed!");
 		return returnType;
 	}
-	println("Failed!");
 	return tunknown();
 }
 
 Type typeOf(AExpr e, TEnv tenv, UseDef useDef) {
   switch (e) {
   	// ID checking
-    case ref(str x, src = loc u):  
-      if (<u, loc d> <- useDef, <d, x, _, Type t> <- tenv) {
-        return t;
-      }
+    case ref(id(str x), src = loc u): {  		
+	  	if (<u, loc d> <- useDef, <d, x, _, Type t> <- tenv) {
+	  		println("???");
+	    	return t;
+	  	}
+  	}
     // Integer Methods
   	case addition(AExpr lhs, AExpr rhs): {
   		return doubleType(tint(), tint(), lhs, rhs, tenv, useDef);
@@ -238,6 +265,10 @@ Type typeOf(AExpr e, TEnv tenv, UseDef useDef) {
 	case intgr(int i): {
 		return tint();
 	}	
+	default: {
+		println("here <e>");
+		println("None of the above");
+	}
   }
   return tunknown(); 
 }

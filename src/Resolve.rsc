@@ -41,8 +41,8 @@ Def defs(AForm f) {
 	//maybe through a strategy we can find distinguish places where they are declared from where they are used
   result = {};
   visit(f) {
-    case simpleQuestion(AExpr x, ref(AId id, src = loc u), AType varType): result = result + <"<id.name>", u>;
-    case computedQuestion(AExpr x, ref(AId id, src = loc u), AType varType, AExpr e): result = result + <"<id.name>", u>;
+    case simpleQuestion(AExpr x, ref(AId id, src = loc u), AType varType, src = loc q): result = result + <"<id.name>", q>;
+    case computedQuestion(AExpr x, ref(AId id, src = loc u), AType varType, AExpr e, src = loc q): result = result + <"<id.name>", q>;
   }	
   //println(result);
   return result; 
