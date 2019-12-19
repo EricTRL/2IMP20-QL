@@ -71,22 +71,15 @@ set[Message] checkLabel(str label, str sq, loc def, loc qloc) {
 }
 
 // Operations inside the Expression should have a valid type
-set[Message] checkExprType(AExpr e, loc def, loc qloc, TEnv tenv, UseDef useDef) {
-	if (def == qloc) {
-		return check(e, tenv, useDef);
-	}
-	return {};
-}
-
 // the declared type computed questions should match the type of the expression.
-set[Message] checkQuestionAndExprType(AExpr e, loc def, loc qloc, TEnv tenv, UseDef useDef, Type t) {
-	if (def == qloc) {
+set[Message] checkQuestionAndExprType(AExpr e, Type t, TEnv tenv, UseDef useDef) {
+	msgs = {};
+		msgs += check(e, tenv, useDef);
 		typeOfExpr = typeOf(e, tenv, useDef);
 		if (typeOfExpr != t) {
-			return { error("The expression type [\"<typeToStr(typeOfExpr)>\"] should match the question type [\"<typeToStr(t)>\"]", e.src) };
+			msgs += { error("The expression type [\"<typeToStr(typeOfExpr)>\"] should match the question type [\"<typeToStr(t)>\"]", e.src) };
 		}
-	}
-	return {};
+	return msgs;
 }
 
 // - produce an error if there are declared questions with the same name but different types.
@@ -97,26 +90,30 @@ set[Message] check(AQuestion q, TEnv tenv, UseDef useDef) {
   	switch(q) {  			
     	case simpleQuestion(strng(sq), ref(AId id), AType var, src = loc qloc): {
     		for (<loc def, str name, str label, Type t> <- tenv) {
-    			result += checkName(name, id, t, var, def);
-				result += checkLabel(label, sq, def, qloc);	
+    			if (def != qloc) {
+    				result += checkName(name, id, t, var, def);
+					result += checkLabel(label, sq, def, qloc);	
+				}		    	
 	    	}
 		}
 		case computedQuestion(strng(sq), ref(AId id), AType var, AExpr e, src = loc qloc): {
 			for (<loc def, str name, str label, Type t> <- tenv) {
-				result += checkName(name, id, t, var, def);
-				result += checkLabel(label, sq, def, qloc);	
-				result += checkExprType(e, def, qloc, tenv, useDef);
-				result += checkQuestionAndExprType(e, def, qloc, tenv, useDef, t);
+				if (def != qloc) {
+					result += checkName(name, id, t, var, def);
+					result += checkLabel(label, sq, def, qloc);	
+				} else {
+					result += checkQuestionAndExprType(e, t, tenv, useDef);
+				}
 			} 
 		}
 		case ifThenElse(AExpr cond, list[AQuestion] thenpart, list[AQuestion] elsepart): { 
-  			result += check(cond, tenv, useDef);
+  			result += checkQuestionAndExprType(cond, tbool(), tenv, useDef);
   			for (AQuestion question <- q.thenpart + q.elsepart) {
   				result += check(question, tenv, useDef);
   			}
   		}
 		case ifThen(AExpr cond, list[AQuestion] questions): {
-			result += check(cond, tenv, useDef);
+			result += checkQuestionAndExprType(cond, tbool(), tenv, useDef);
   			for (AQuestion question <- q.questions) {
   				result += check(question, tenv, useDef);
   			}
@@ -150,7 +147,7 @@ set[Message] check(AExpr e, TEnv tenv, UseDef useDef) {
   
   switch (e) {
     case ref(id(str x), src = loc u): {
-      	msgs += { error("Undeclared question", u) | useDef[u] == {} };
+      	msgs += { error("Undeclared question [\"<x>\"]", u) | useDef[u] == {} };
   	}
   	case negation(AExpr e, src = loc u): {
   		msgs += checkExpr({e}, tenv, useDef, {tbool()}, u);
@@ -204,10 +201,10 @@ Type typeOf(AExpr e, TEnv tenv, UseDef useDef) {
 	  	}
   	}
   	// Integer Methods
-  	case multiplication(): {
+  	case multiplication(AExpr lhs, AExpr rhs): {
   		return tint();
   	}
-  	case division(): {
+  	case division(AExpr lhs, AExpr rhs): {
   		return tint();
   	}
   	case addition(AExpr lhs, AExpr rhs): {
@@ -217,31 +214,31 @@ Type typeOf(AExpr e, TEnv tenv, UseDef useDef) {
   		return tint();
 	}
 	// Boolean Methods
-	case negation(): {
+	case negation(AExpr e): {
   		return tbool();
   	}
-	case smallerThan(): {
+	case smallerThan(AExpr lhs, AExpr rhs): {
 		return tbool();
 	}
-	case greaterThan(): {
+	case greaterThan(AExpr lhs, AExpr rhs): {
 		return tbool();
 	}
-	case leq(): {
+	case leq(AExpr lhs, AExpr rhs): {
 		return tbool();
 	}
-	case geq(): {
+	case geq(AExpr lhs, AExpr rhs): {
 		return tbool();
 	}
-	case equal(): {
+	case equal(AExpr lhs, AExpr rhs): {
 		return tbool();
 	}
-	case neq(): {
+	case neq(AExpr lhs, AExpr rhs): {
 		return tbool();
 	}
-	case and(): {
+	case and(AExpr lhs, AExpr rhs): {
 		return tbool();
 	}
-	case or(): {
+	case or(AExpr lhs, AExpr rhs): {
 		return tbool();
 	}
 	// String Methods

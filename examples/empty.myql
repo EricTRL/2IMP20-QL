@@ -2,26 +2,26 @@ form taxOfficeExample {
 	
 	"This will always be false" falseBoolean: integer = undefinedQuestion
 	
-	if (5 + 6 + 89459) { 
+	if (5 == 5) { 
 		"New shoe size?" asdf: integer = 47
 	} 
 	
-	if (undefinedQuestionNumberTwo + 4 < 4) {
+	if (undefinedQuestionNumberTwo + 4) {
 		"Shoe size?" size: integer = 46
 	} 
 	
 	//"last size?" size: integer = 45
 	
-	//"differnquestn"
-	//acsd: boolean
+	"samelabel"
+	yesWeCan: integer
 	 
-	//"differnquestion" yesWeCan: boolean = 3 
+	"samelabel" yesWeCan: boolean = true
 	   
  	//if (x < 5) {
 		//"tfy"
-		//acsd: integer
+		//acsd: integer 
 	//}
 	
 	"TestQuestionAddition"
-	sum: integer = 5 + "test" + 4
-}     
+	sum: integer = 5 + 3  
+}           
