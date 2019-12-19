@@ -11,7 +11,8 @@ data Type
   | tstr()
   | tunknown()
   ;
-  
+
+//Transform a data Type to a string, used for specification in error messages
 str typeToStr(Type t) {
 	switch(t) {
 		case tint(): return "integer";
@@ -21,6 +22,7 @@ str typeToStr(Type t) {
 	return "unknown";
 }
 
+//Convert AType to the needed data Types
 Type ATypeToDataType(AType t) {
 	switch(t) {
 		case string(): return tstr();
@@ -35,6 +37,8 @@ alias TEnv = rel[loc def, str name, str label, Type \type];
 
 // To avoid recursively traversing the form, use the `visit` construct
 // or deep match (e.g., `for (/question(...) := f) {...}` ) 
+//Add all questions into the Type Environment, excluding the if (else) / block constructs
+//Note that all the questions within the constructs are added to the Type Environment
 TEnv collect(AForm f) {
   result = {};
   visit(f) {
@@ -44,6 +48,7 @@ TEnv collect(AForm f) {
   return result; 
 }
 
+//Check the names of questions if they aren't equal to reserved keywords
 set[Message] checkKeyWords(AId id, loc u) {
 	if (id.name in {"true", "false", "if", "else"}) {
 		return { error("<id.name> is a reserved keyword", u) };
@@ -51,6 +56,8 @@ set[Message] checkKeyWords(AId id, loc u) {
 	return {};
 }
 
+
+//For all questions in the form, check for errors / warnings
 set[Message] check(AForm f, TEnv tenv, UseDef useDef) {
   result = {};
   for (AQuestion q <- f.questions) {
@@ -69,7 +76,7 @@ set[Message] checkName(str name, AId id, Type t, AType var, loc def) {
 	return {};
 }
 
-// duplicate labels should trigger a warning.
+// If there are duplicate labels they should trigger a warning.
 set[Message] checkLabel(str label, str sq, loc def, loc qloc) {
     if (label == sq && def != qloc) {
 		return { warning("There is another question with the same label", def) };
@@ -77,8 +84,8 @@ set[Message] checkLabel(str label, str sq, loc def, loc qloc) {
     return {};
 }
 
-// Operations inside the Expression should have a valid type
-// the declared type computed questions should match the type of the expression.
+// Operations inside the Expression should have a valid type (checked via the check-method)
+// the declared type of expressions should match the type of the computed question.
 set[Message] checkQuestionAndExprType(AExpr e, Type t, TEnv tenv, UseDef useDef) {
 	msgs = {};
 		msgs += check(e, tenv, useDef);
@@ -90,16 +97,19 @@ set[Message] checkQuestionAndExprType(AExpr e, Type t, TEnv tenv, UseDef useDef)
 }
 
 // - produce an error if there are declared questions with the same name but different types.
-// - duplicate labels should trigger a warning 
+// - duplicate labels trigger a warning 
 // - the declared type computed questions should match the type of the expression.
 set[Message] check(AQuestion q, TEnv tenv, UseDef useDef) {
   	result = {};
   	switch(q) {  			
     	case simpleQuestion(strng(sq), ref(AId id, src = loc u), AType var, src = loc qloc): {
     		result += checkKeyWords(id, u);
+    		//Loop over all questions in the environment, except for the one we are currently verifying
     		for (<loc def, str name, str label, Type t> <- tenv) {
     			if (def != qloc) {
+    				//Check for duplicate name with different type
     				result += checkName(name, id, t, var, def);
+    				//Check for duplicate labels
 					result += checkLabel(label, sq, def, qloc);	
 				}		    	
 	    	}
@@ -107,27 +117,39 @@ set[Message] check(AQuestion q, TEnv tenv, UseDef useDef) {
 		case computedQuestion(strng(sq), ref(AId id, src = loc u), AType var, AExpr e, src = loc qloc): {
 			result += checkKeyWords(id, u);
 			for (<loc def, str name, str label, Type t> <- tenv) {
+				//For all questions except for the one we are currently verifying
 				if (def != qloc) {
+					//Check for duplicate name with different type
 					result += checkName(name, id, t, var, def);
+					//Check for duplicate labels
 					result += checkLabel(label, sq, def, qloc);	
-				} else {
+				} else {//For the one we are currently verifying
+					//Check whether the expression type matches the question type, 
+					//and check whether the expression contains compatible types
 					result += checkQuestionAndExprType(e, t, tenv, useDef);
 				}
 			} 
 		}
 		case ifThenElse(AExpr cond, list[AQuestion] thenpart, list[AQuestion] elsepart): { 
+			//Check whether the condition is of type boolean and,
+			//whether the expression contains compatible types
   			result += checkQuestionAndExprType(cond, tbool(), tenv, useDef);
+  			//Recursively check all questions within the if and else construct for errors/warnings
   			for (AQuestion question <- q.thenpart + q.elsepart) {
   				result += check(question, tenv, useDef);
   			}
   		}
 		case ifThen(AExpr cond, list[AQuestion] questions): {
+			//Check whether the condition is of type boolean and,
+			//whether the expression contains compatible types
 			result += checkQuestionAndExprType(cond, tbool(), tenv, useDef);
+			//Recursively check all questions within the if construct for errors/warnings
   			for (AQuestion question <- q.questions) {
   				result += check(question, tenv, useDef);
   			}
   		}
   		case block(list[AQuestion] questions): {
+  			//Recursively check all questions within the block construct for errors/warnings
   			for (AQuestion question <- q.questions) {
   				result += check(question, tenv, useDef);
   			}
@@ -136,6 +158,8 @@ set[Message] check(AQuestion q, TEnv tenv, UseDef useDef) {
   return result; 
 }
 
+//For all the expressions in the set expr, check the operand compatability recursively
+//If the type of an expression does not match one of the expected types in t, then add an error
 set[Message] checkExpr(set[AExpr] expr, TEnv tenv, UseDef useDef, set[Type] t, loc u) {
 	msgs = {};
 	for (AExpr e <- expr) {
@@ -148,7 +172,7 @@ set[Message] checkExpr(set[AExpr] expr, TEnv tenv, UseDef useDef, set[Type] t, l
 	return msgs;
 }
 
-// Check operand compatibility with operators.
+// Check operand compatibility with operators recursively.
 // E.g. for an addition node add(lhs, rhs), 
 //   the requirement is that typeOf(lhs) == typeOf(rhs) == tint()
 set[Message] check(AExpr e, TEnv tenv, UseDef useDef) {
@@ -201,6 +225,7 @@ set[Message] check(AExpr e, TEnv tenv, UseDef useDef) {
   return msgs; 
 }
 
+//Given an expression e, return the expected type for that expression
 Type typeOf(AExpr e, TEnv tenv, UseDef useDef) {
   switch (e) {
   	// ID checking
