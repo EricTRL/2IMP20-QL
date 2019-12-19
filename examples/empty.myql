@@ -3,7 +3,7 @@ form taxOfficeExample {
 	"This will always be false" falseBoolean: integer = undefinedQuestion
 	
 	if (5 == 5) { 
-		"New shoe size?" asdf: integer = -8
+		"New shoe size?" size: integer = -8
 	} 
 	
 	if (undefinedQuestionNumberTwo + 4) {

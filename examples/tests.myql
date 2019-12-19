@@ -1,0 +1,215 @@
+form tests {
+	"Is this a good simple integer question"
+	goodInt: integer
+	
+	"Is this a good computed integer question"
+	goodComputedInt: integer = 1 + 1 //quick maths
+	
+	//Bad question due to an integer being assigned a boolean value
+	"Is this a bad computed integer given boolean question"
+	badComputedBoolInt: integer = 1 + 1 == 2//quick maths
+	
+	//Bad question due to an integer being assigned a string value
+	"Is this a bad computed integer given string question"
+	badComputedStrInt: integer = "1 + 1 == 2"//quick maths
+	
+	"Is this a good simple boolean question"
+	goodBool: boolean
+	
+	"Is this a good computed boolean question"
+	goodComputedBool: boolean = true
+	
+	//Bad question due to a boolean being assigned a string value
+	"Is this a bad computed boolean given integer question"
+	badComputedIntBool: boolean = 1
+	
+	//Bad question due to a boolean being assigned a string value
+	"Is this a bad computed boolean given string question"
+	badComputedStrBool: boolean = "true"
+	
+	"Is this a good simple string question"
+	goodStr: string
+	
+	"Is this a good computed string question"
+	goodComputedStr: string = "good"
+	
+	//Bad question due to a string being assigned a boolean value
+	"Is this a bad computed string given boolean question"
+	badComputedBoolStr: string = true
+	
+	//Bad question due to a string being assigned an integer value
+	"Is this a bad computed string given integer question"
+	badComputedIntStr: string = 3
+	
+	//---------------------------------------------------------------------------------
+	// Good operands
+	"Is this a good negation"
+	goodNegation: boolean = !goodBool
+	
+	"Is this a good multiplication"
+	goodMul: integer = 234252 * 5467 * 394
+	
+	"Is this a good division"
+	goodDiv: integer = 20 / 5 / 0
+	
+	"Is this a good addition"
+	goodAdd: integer = 12 + 356 - 342
+	
+	"Is this a good subtraction"
+	goodSub: integer = 214353 - goodAdd
+	
+	"Is this a good smaller than"
+	goodSmallerThan: boolean = 20 < 30
+	
+	"Is this a good greater than"
+	goodGreaterThan: boolean = 34 > 11
+	
+	"Is this a good less or equal to"
+	goodLeq: boolean = 24 <= 445
+	
+	"Is this a good greater or equal to"
+	goodGeq: boolean = 4390 >= 548
+	
+	"Is this a good integer equals integer"
+	goodIntEquals: boolean = 5 * 4 - 24 + 6 * 4 == 20
+	
+	"Is this a good string equals string"
+	goodStrEquals: boolean = "hello" == "hello"
+	
+	"Is this a good boolean equals boolean"
+	goodSmallerThan: boolean = true == true
+	
+	"Is this a good integer does not equal integer"
+	goodIntEquals: boolean = 3 != 9
+	
+	"Is this a good string does not equal string"
+	goodStrEquals: boolean = "hello" != "world"
+	
+	"Is this a good boolean does not equal boolean"
+	goodSmallerThan: boolean = true != false
+	
+	"Is this a good and"
+	goodAnd: boolean = true && true
+	
+	"Is this a good or"
+	goodOr: boolean = true || false
+	
+	//-----------------------------------------------------------------------------
+	
+	//Bad operands
+	"Is this a bad negation"
+	goodNegation: boolean = !"not allowed"
+	
+	"Is this a bad multiplication"
+	goodMul: integer = true * 5467
+	
+	"Is this a bad division"
+	goodDiv: integer = 20 / "four"
+	
+	"Is this a bad addition"
+	goodAdd: integer = false + 356
+	
+	"Is this a bad subtraction"
+	goodSub: integer = 214353 - true
+	
+	"Is this a bad smaller than"
+	goodSmallerThan: boolean = "some text" < 30
+	
+	"Is this a bad greater than"
+	goodGreaterThan: boolean = "EasterEgg" > 11
+	
+	"Is this a bad less or equal to"
+	goodLeq: boolean = 24 <= false
+	
+	"Is this a bad greater or equal to"
+	goodGeq: boolean = 4390 >= "nope"
+	
+	//For == and != it is possible to compare arguments of different types, 
+	//though  depending on the implementation this will in (almost) all cases evaluate to false
+	"Is this a bad integer equals integer"
+	goodIntEquals: boolean = true == 20
+	
+	"Is this a bad string equals string"
+	goodStrEquals: boolean = "hello" == 1
+	
+	"Is this a bad boolean equals boolean"
+	goodSmallerThan: boolean = "Merry Christmas" == true
+	
+	"Is this a bad integer does not equal integer"
+	goodIntEquals: boolean = "idk" != 9
+	
+	"Is this a bad string does not equal string"
+	goodStrEquals: boolean = "hello" != true
+	
+	"Is this a bad boolean does not equal boolean"
+	goodSmallerThan: boolean = "zodichtbij" != false
+	
+	"Is this a bad and"
+	goodAnd: boolean = 1 && true
+	
+	"Is this a bad or"
+	goodOr: boolean = "Magdit" || false
+	
+	
+	//-----------------------------------------------------------------------------
+	
+	//Duplicate labels
+	"Is this a boolean question with the same label as a computed question"
+	sameLabelMixBool1: boolean 
+	
+	"Is this a boolean question with the same label as a computed question"
+	sameLabelMixBool2: boolean = false 
+
+	"Same label as other question"
+	sameLabelAsIf: integer = 1
+	
+	if (true) {
+		"Same label as other question" 
+		sameLabelAsOutsideIf: string
+	}
+	
+	{
+		"Same label as other question" 
+		sameLabelButInBlock: boolean = false
+	}
+	
+
+	//Same names and same types
+	"Is this a simple boolean question with the same name1"
+	sameNameBool: boolean
+	
+	"Is this a simple boolean question with the same name2"
+	sameNameBool: boolean
+	
+	//Duplicate question declarations with different types
+	"Is this a simple boolean question with the same name as an integer question"
+	sameNameBoolInt: boolean
+	
+	"Is this a simple integer question with the same name as a boolean question"
+	sameNameBoolInt: integer
+	
+	//References to undefined questions
+	"Does this value reference an undefined question"
+	undefinedValue: integer = undefinedInteger
+	
+	"This contains an undefined value within computation"
+	undefinedComp: integer = undefinedComputation * 2
+	
+	{
+		//if statement with an undefined condition
+		if (undefinedCondition) {
+			"fillerquestion" maybe: boolean
+		}
+		
+		//Conditions that are not of type boolean
+		if (1 + 1) {
+			"FillerForIf" definitely: boolean = true	
+		} else {
+			"FillerForElse" elseFiller: string = "definitely"
+		}
+		
+		if ("asdfasd") {
+			"conditionString" value: integer = 1
+		}
+	}
+}
