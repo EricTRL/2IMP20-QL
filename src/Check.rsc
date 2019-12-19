@@ -44,6 +44,13 @@ TEnv collect(AForm f) {
   return result; 
 }
 
+set[Message] checkKeyWords(AId id, loc u) {
+	if (id.name in {"true", "false", "if", "else"}) {
+		return { error("<id.name> is a reserved keyword", u) };
+	}
+	return {};
+}
+
 set[Message] check(AForm f, TEnv tenv, UseDef useDef) {
   result = {};
   for (AQuestion q <- f.questions) {
@@ -88,7 +95,8 @@ set[Message] checkQuestionAndExprType(AExpr e, Type t, TEnv tenv, UseDef useDef)
 set[Message] check(AQuestion q, TEnv tenv, UseDef useDef) {
   	result = {};
   	switch(q) {  			
-    	case simpleQuestion(strng(sq), ref(AId id), AType var, src = loc qloc): {
+    	case simpleQuestion(strng(sq), ref(AId id, src = loc u), AType var, src = loc qloc): {
+    		result += checkKeyWords(id, u);
     		for (<loc def, str name, str label, Type t> <- tenv) {
     			if (def != qloc) {
     				result += checkName(name, id, t, var, def);
@@ -96,7 +104,8 @@ set[Message] check(AQuestion q, TEnv tenv, UseDef useDef) {
 				}		    	
 	    	}
 		}
-		case computedQuestion(strng(sq), ref(AId id), AType var, AExpr e, src = loc qloc): {
+		case computedQuestion(strng(sq), ref(AId id, src = loc u), AType var, AExpr e, src = loc qloc): {
+			result += checkKeyWords(id, u);
 			for (<loc def, str name, str label, Type t> <- tenv) {
 				if (def != qloc) {
 					result += checkName(name, id, t, var, def);

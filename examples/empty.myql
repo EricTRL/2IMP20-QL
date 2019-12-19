@@ -3,7 +3,7 @@ form taxOfficeExample {
 	"This will always be false" falseBoolean: integer = undefinedQuestion
 	
 	if (5 == 5) { 
-		"New shoe size?" asdf: integer = 47
+		"New shoe size?" asdf: integer = -8
 	} 
 	
 	if (undefinedQuestionNumberTwo + 4) {
@@ -23,5 +23,10 @@ form taxOfficeExample {
 	//}
 	
 	"TestQuestionAddition"
-	sum: integer = 5 + 3  
-}           
+	else: integer = 5 + 3  
+	
+	if (true) {
+		"questions"
+		nope: integer = 3
+	}
+}                
