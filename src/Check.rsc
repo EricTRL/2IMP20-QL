@@ -11,6 +11,15 @@ data Type
   | tstr()
   | tunknown()
   ;
+  
+str typeToStr(Type t) {
+	switch(t) {
+		case tint(): return "integer";
+		case tbool(): return "boolean";
+		case tstr(): return "string";
+	}
+	return "unknown";
+}
 
 Type ATypeToDataType(AType t) {
 	switch(t) {
@@ -56,13 +65,28 @@ set[Message] checkName(str name, AId id, Type t, AType var, loc def) {
 // duplicate labels should trigger a warning.
 set[Message] checkLabel(str label, str sq, loc def, loc qloc) {
     if (label == sq && def != qloc) {
-    		return { warning("There is another question with the same label", def) };
+		return { warning("There is another question with the same label", def) };
     }
     return {};
 }
 
-void checkExprType() {
+// Operations inside the Expression should have a valid type
+set[Message] checkExprType(AExpr e, loc def, loc qloc, TEnv tenv, UseDef useDef) {
+	if (def == qloc) {
+		return check(e, tenv, useDef);
+	}
+	return {};
+}
 
+// the declared type computed questions should match the type of the expression.
+set[Message] checkQuestionAndExprType(AExpr e, loc def, loc qloc, TEnv tenv, UseDef useDef, Type t) {
+	if (def == qloc) {
+		typeOfExpr = typeOf(e, tenv, useDef);
+		if (typeOfExpr != t) {
+			return { error("The expression type (<typeToStr(typeOfExpr) >) should match the question type (<typeToStr(t)>)", qloc) };
+		}
+	}
+	return {};
 }
 
 // - produce an error if there are declared questions with the same name but different types.
@@ -70,28 +94,19 @@ void checkExprType() {
 // - the declared type computed questions should match the type of the expression.
 set[Message] check(AQuestion q, TEnv tenv, UseDef useDef) {
   	result = {};
-  	//println(q);
   	switch(q) {  			
     	case simpleQuestion(strng(sq), ref(AId id), AType var, src = loc qloc): {
-    	//	println("simple");
     		for (<loc def, str name, str label, Type t> <- tenv) {
     			result += checkName(name, id, t, var, def);
 				result += checkLabel(label, sq, def, qloc);	
 	    	}
 		}
 		case computedQuestion(strng(sq), ref(AId id), AType var, AExpr e, src = loc qloc): {
-			println("computed");
 			for (<loc def, str name, str label, Type t> <- tenv) {
 				result += checkName(name, id, t, var, def);
 				result += checkLabel(label, sq, def, qloc);	
-				// the declared type computed questions should match the type of the expression.
-				//if (def == qloc) {
-				////	println(e);
-				////	println(ATypeToDataType(e));
-				//	if (ATypeToDataType(e) != t) {
-				//		result = result + error("The expression type should match the question type");
-				//	}
-				//}
+				result += checkExprType(e, def, qloc, tenv, useDef);
+				result += checkQuestionAndExprType(e, def, qloc, tenv, useDef, t);
 			} 
 		}
 		case ifThenElse(AExpr cond, list[AQuestion] thenpart, list[AQuestion] elsepart): { 
@@ -99,17 +114,12 @@ set[Message] check(AQuestion q, TEnv tenv, UseDef useDef) {
   				result += check(question, tenv, useDef);
   			}
   		}
-		default: {
-			println("Hij fired niet");
-			println(q.questions);
+		default: { // ifThen and block
   			for (AQuestion question <- q.questions) {
-  				println("entering loop");
   				result += check(question, tenv, useDef);
   			}
   		}
-  	}
-    
-  
+  	}  
   return result; 
 }
 
@@ -122,36 +132,112 @@ set[Message] check(AExpr e, TEnv tenv, UseDef useDef) {
   switch (e) {
     case ref(str x, src = loc u):
       msgs += { error("Undeclared question", u) | useDef[u] == {} };
-
+	case addition(AExpr lhs, AExpr rhs, src = loc u): {
+		if (typeOf(lhs, tenv, useDef) != tint() || typeOf(rhs, tenv, useDef) != tint()) {
+			println("Addition failed!");
+			println(u);
+			println("-- tenv below");
+			println(tenv);
+			println("--- usedef below");
+			println(useDef);
+			msgs += error("The expression type (" + "???" + ") should match the question type (integer)", u);
+		} else {
+			println("Addition passed!");
+		}
+	}	
+	//case intgr(int i): {
+	//	println("Integer base case");
+	//}	
+		// 3 + 5
+		// 4 + 5 + "wow"
     // etc.
   }
   
   return msgs; 
 }
 
+Type doubleType(Type t, Type returnType, AExpr lhs, AExpr rhs, TEnv tenv, UseDef useDef) {
+	lhsType = typeOf(lhs, tenv, useDef);
+	if (lhsType == t && lhsType == typeOf(rhs, tenv, useDef)) {
+		println("Passed!");
+		return returnType;
+	}
+	println("Failed!");
+	return tunknown();
+}
+
 Type typeOf(AExpr e, TEnv tenv, UseDef useDef) {
   switch (e) {
+  	// ID checking
     case ref(str x, src = loc u):  
       if (<u, loc d> <- useDef, <d, x, _, Type t> <- tenv) {
         return t;
       }
-    //case negation(AExpr e, src = loc u): { return t; }
-    //case multiplication(AExpr lhs, AExpr rhs): { return t;}
-    //case division(AExpr lhs, AExpr rhs): { return t;}
-    //case addition(AExpr lhs, AExpr rhs): { return t; }
-    //case subtraction(AExpr lhs, AExpr rhs): {return t;}
-    //case smallerThan(AExpr lhs, AExpr rhs): {return t;}
-    //case greaterThan(AExpr lhs, AExpr rhs): {return t;}
-    //case leq(AExpr lhs, AExpr rhs): {return t;}
-    //case geq(AExpr lhs, AExpr rhs): {return t;}
-    //case equal(AExpr lhs, AExpr rhs): {return t;}
-    //case neq(AExpr lhs, AExpr rhs): {return t;}
-    //case and(AExpr lhs, AExpr rhs): {return t;}
-    //case or(AExpr lhs, AExpr rhs): {return t;}
-    //case bln(bool b): {return t;}
-    //case intgr(int i): {return t;}
-    //case strng(str s): {return t;}
-    // etc.
+    // Integer Methods
+  	case addition(AExpr lhs, AExpr rhs): {
+  		return doubleType(tint(), tint(), lhs, rhs, tenv, useDef);
+	}
+	case subtraction(AExpr lhs, AExpr rhs): {
+  		return doubleType(tint(), tint(), lhs, rhs, tenv, useDef);
+	}
+	case multiplication(AExpr lhs, AExpr rhs): {
+  		return doubleType(tint(), tint(), lhs, rhs, tenv, useDef);
+	}
+	case division(AExpr lhs, AExpr rhs): {
+  		return doubleType(tint(), tint(), lhs, rhs, tenv, useDef);
+	}
+	case smallerThan(AExpr lhs, AExpr rhs): {
+  		return doubleType(tint(), tbool(), lhs, rhs, tenv, useDef);
+	}
+	case greaterThan(AExpr lhs, AExpr rhs): {
+  		return doubleType(tint(), tbool(), lhs, rhs, tenv, useDef);
+	}
+	case leq(AExpr lhs, AExpr rhs): {
+  		return doubleType(tint(), tbool(), lhs, rhs, tenv, useDef);
+	}
+	case geq(AExpr lhs, AExpr rhs): {
+  		return doubleType(tint(), tbool(), lhs, rhs, tenv, useDef);
+	}
+	// Boolean Methods
+	case and(AExpr lhs, AExpr rhs): {
+  		return doubleType(tbool(), tbool(), lhs, rhs, tenv, useDef);
+	}
+	case or(AExpr lhs, AExpr rhs): {
+  		return doubleType(tbool(), tbool(), lhs, rhs, tenv, useDef);
+	}
+	case negation(AExpr expr): {
+		// Special case: No left hand side or right hand side
+		if (typeOf(expr, tenv, useDef) == tbool()) {
+			return tbool();
+		}
+	}
+	// String Methods
+		// String concatenation is not supported
+		// Lexicographical comparison of strings is not supported
+		
+	// Boolean, String, or Integer Methods
+	case equal(AExpr lhs, AExpr rhs): {
+		lhsType = typeOf(lhs, tenv, useDef);
+		if (lhsType == typeOf(rhs, tenv, useDef)) {
+			return tbool();
+		}
+	}
+	case neq(AExpr lhs, AExpr rhs): {
+		lhsType = typeOf(lhs, tenv, useDef);
+		if (lhsType == typeOf(rhs, tenv, useDef)) {
+			return tbool();
+		}
+	}
+	// Base Cases
+	case bln(bool b): {
+		return tbool();
+	}	
+	case strng(str s): {
+		return tstr();
+	}	
+	case intgr(int i): {
+		return tint();
+	}	
   }
   return tunknown(); 
 }

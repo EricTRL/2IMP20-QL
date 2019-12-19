@@ -15,19 +15,19 @@ form taxOfficeExample {
 	
 	//}
 	
-	"5 < 5" 
-	ietsaders: boolean
+	//"5 < 5" 
+	//ietsaders: boolean
 	 
 	"differnquestinn"
-	ietsaers: integer  
+	ietsaers: boolean = 1 + (6 + 4)
 	
-	"differnquestn"
-	acsd: boolean
+	//"differnquestn"
+	//acsd: boolean
 	 
 	//"differnquestion" yesWeCan: boolean = 3 
 	   
- 	if (x < 5) {
-		"tfy"
-		acsd: integer
-	}
+ 	//if (x < 5) {
+		//"tfy"
+		//acsd: integer
+	//}
 }
