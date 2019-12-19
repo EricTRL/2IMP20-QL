@@ -1,25 +1,4 @@
 form taxOfficeExample {
-	//"5 < 5"
-	//x : integer
-	
-	//"computedQuestion"
-	//y : boolean = x == 1
-	
-	//"Can we do it" yesWeCan : boolean = false
-	
-	//if (x) {
-	
-	//}
-	
-	//if (yesWeCan) {
-	
-	//}
-	
-	//"5 < 5" 
-	//ietsaders: boolean
-		 
-	
-	 
 	
 	"This will always be false" falseBoolean: integer = undefinedQuestion
 	
@@ -42,4 +21,7 @@ form taxOfficeExample {
 		//"tfy"
 		//acsd: integer
 	//}
-}
+	
+	"TestQuestionAddition"
+	sum: integer = 5 + "test" + 4
+}     

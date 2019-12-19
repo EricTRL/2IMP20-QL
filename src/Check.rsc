@@ -110,14 +110,12 @@ set[Message] check(AQuestion q, TEnv tenv, UseDef useDef) {
 			} 
 		}
 		case ifThenElse(AExpr cond, list[AQuestion] thenpart, list[AQuestion] elsepart): { 
-  			result += exprTypeError({tbool()}, cond, tenv, useDef, cond.src);
   			result += check(cond, tenv, useDef);
   			for (AQuestion question <- q.thenpart + q.elsepart) {
   				result += check(question, tenv, useDef);
   			}
   		}
 		case ifThen(AExpr cond, list[AQuestion] questions): {
-			result += exprTypeError({tbool()}, cond, tenv, useDef, cond.src);
 			result += check(cond, tenv, useDef);
   			for (AQuestion question <- q.questions) {
   				result += check(question, tenv, useDef);
@@ -132,12 +130,16 @@ set[Message] check(AQuestion q, TEnv tenv, UseDef useDef) {
   return result; 
 }
 
-set[Message] exprTypeError(set[Type] t, AExpr e, TEnv tenv, UseDef useDef, loc u) {
-	typeOfExpr = typeOf(e, tenv, useDef);
-	if (!(typeOfExpr in t)) {
-		return {error("Expression contains incompatible types. Got [\"<typeToStr(typeOfExpr)>\"] expected one of <[typeToStr(expType) | (Type expType <- t)]>", u)};
+set[Message] checkExpr(set[AExpr] expr, TEnv tenv, UseDef useDef, set[Type] t, loc u) {
+	msgs = {};
+	for (AExpr e <- expr) {
+		msgs += check(e, tenv, useDef);
+		typeOfE = typeOf(e, tenv, useDef);
+		if (!(typeOfE in t)) {
+			msgs += { error("Expression contains incompatible types. Got [\"<typeToStr(typeOfE)>\"] expected one of <[typeToStr(expType) | (Type expType <- t)]>", u)};
+		}
 	}
-	return {};
+	return msgs;
 }
 
 // Check operand compatibility with operators.
@@ -148,58 +150,49 @@ set[Message] check(AExpr e, TEnv tenv, UseDef useDef) {
   
   switch (e) {
     case ref(id(str x), src = loc u): {
-    	println("whoa i got here <useDef[u]>");
       	msgs += { error("Undeclared question", u) | useDef[u] == {} };
   	}
-	case addition(_, _, src = loc u): {
-		msgs += exprTypeError({tint()}, e, tenv, useDef, u);
+  	case negation(AExpr e, src = loc u): {
+  		msgs += checkExpr({e}, tenv, useDef, {tbool()}, u);
+  	}
+  	case multiplication(AExpr lhs, AExpr rhs, src = loc u): {
+  		msgs += checkExpr({lhs, rhs}, tenv, useDef, {tint()}, u);
+  	}
+  	case division(AExpr lhs, AExpr rhs, src = loc u): {
+  		msgs += checkExpr({lhs, rhs}, tenv, useDef, {tint()}, u);
+  	}
+	case addition(AExpr lhs, AExpr rhs, src = loc u): {
+		msgs += checkExpr({lhs, rhs}, tenv, useDef, {tint()}, u);
 	}
-	case subtraction(_, _, src = loc u): {
-		msgs += exprTypeError({tint()}, e, tenv, useDef, u);
-	}
-	case multiplication(_, _, src = loc u): {
-		msgs += exprTypeError({tint()}, e, tenv, useDef, u);
-	}
-	case division(_, _, src = loc u): {
-		msgs += exprTypeError({tint()}, e, tenv, useDef, u);
-	}
-	case smallerThan(_, _, src = loc u): {
-		msgs += exprTypeError({tint()}, e, tenv, useDef, u);
-	}
-	case greaterThan(_, _, src = loc u): {
-		msgs += exprTypeError({tint()}, e, tenv, useDef, u);
-	}
-	case leq(_, _, src = loc u): {
-		msgs += exprTypeError({tint()}, e, tenv, useDef, u);
-	}
-	case geq(_, _, src = loc u): {
-		msgs += exprTypeError({tint()}, e, tenv, useDef, u);
-	}
-	case and(_, _, src = loc u): {
-		msgs += exprTypeError({tint()}, e, tenv, useDef, u);
-	}
-	case or(_, _, src = loc u): {
-		msgs += exprTypeError({tbool()}, e, tenv, useDef, u);
-	}
-	case negation(_, _, src = loc u): {
-		msgs += exprTypeError({tbool()}, e, tenv, useDef, u);
-	}
-	case equal(_, _, src = loc u): {
-		msgs += exprTypeError({tint(), tbool(), tstr()}, e, tenv, useDef, u);
-	}
-	case neq(_, _, src = loc u): {
-		msgs += exprTypeError({tint(), tbool(), tstr()}, e, tenv, useDef, u);
-	}
+	case subtraction(AExpr lhs, AExpr rhs, src = loc u): {
+  		msgs += checkExpr({lhs, rhs}, tenv, useDef, {tint()}, u);
+  	}
+  	case smallerThan(AExpr lhs, AExpr rhs, src = loc u): {
+  		msgs += checkExpr({lhs, rhs}, tenv, useDef, {tint()}, u);
+  	}
+  	case greaterThan(AExpr lhs, AExpr rhs, src = loc u): {
+  		msgs += checkExpr({lhs, rhs}, tenv, useDef, {tint()}, u);
+  	}
+  	case leq(AExpr lhs, AExpr rhs, src = loc u): {
+  		msgs += checkExpr({lhs, rhs}, tenv, useDef, {tint()}, u);
+  	}
+  	case geq(AExpr lhs, AExpr rhs, src = loc u): {
+  		msgs += checkExpr({lhs, rhs}, tenv, useDef, {tint()}, u);
+  	}
+  	case equal(AExpr lhs, AExpr rhs, src = loc u): {
+  		msgs += checkExpr({lhs, rhs}, tenv, useDef, {tint(), tstr(), tbool()}, u);
+  	}
+  	case neq(AExpr lhs, AExpr rhs, src = loc u): {
+  		msgs += checkExpr({lhs, rhs}, tenv, useDef, {tint(), tstr(), tbool()}, u);
+  	}
+  	case and(AExpr lhs, AExpr rhs, src = loc u): {
+  		msgs += checkExpr({lhs, rhs}, tenv, useDef, {tbool()}, u);
+  	}
+  	case or(AExpr lhs, AExpr rhs, src = loc u): {
+  		msgs += checkExpr({lhs, rhs}, tenv, useDef, {tbool()}, u);
+  	}
   }
   return msgs; 
-}
-
-Type doubleType(Type t, Type returnType, AExpr lhs, AExpr rhs, TEnv tenv, UseDef useDef) {
-	lhsType = typeOf(lhs, tenv, useDef);
-	if (lhsType == t && lhsType == typeOf(rhs, tenv, useDef)) {
-		return returnType;
-	}
-	return tunknown();
 }
 
 Type typeOf(AExpr e, TEnv tenv, UseDef useDef) {
@@ -210,61 +203,50 @@ Type typeOf(AExpr e, TEnv tenv, UseDef useDef) {
 	    	return t;
 	  	}
   	}
-    // Integer Methods
+  	// Integer Methods
+  	case multiplication(): {
+  		return tint();
+  	}
+  	case division(): {
+  		return tint();
+  	}
   	case addition(AExpr lhs, AExpr rhs): {
-  		return doubleType(tint(), tint(), lhs, rhs, tenv, useDef);
+  		return tint();
 	}
 	case subtraction(AExpr lhs, AExpr rhs): {
-  		return doubleType(tint(), tint(), lhs, rhs, tenv, useDef);
-	}
-	case multiplication(AExpr lhs, AExpr rhs): {
-  		return doubleType(tint(), tint(), lhs, rhs, tenv, useDef);
-	}
-	case division(AExpr lhs, AExpr rhs): {
-  		return doubleType(tint(), tint(), lhs, rhs, tenv, useDef);
-	}
-	case smallerThan(AExpr lhs, AExpr rhs): {
-  		return doubleType(tint(), tbool(), lhs, rhs, tenv, useDef);
-	}
-	case greaterThan(AExpr lhs, AExpr rhs): {
-  		return doubleType(tint(), tbool(), lhs, rhs, tenv, useDef);
-	}
-	case leq(AExpr lhs, AExpr rhs): {
-  		return doubleType(tint(), tbool(), lhs, rhs, tenv, useDef);
-	}
-	case geq(AExpr lhs, AExpr rhs): {
-  		return doubleType(tint(), tbool(), lhs, rhs, tenv, useDef);
+  		return tint();
 	}
 	// Boolean Methods
-	case and(AExpr lhs, AExpr rhs): {
-  		return doubleType(tbool(), tbool(), lhs, rhs, tenv, useDef);
+	case negation(): {
+  		return tbool();
+  	}
+	case smallerThan(): {
+		return tbool();
 	}
-	case or(AExpr lhs, AExpr rhs): {
-  		return doubleType(tbool(), tbool(), lhs, rhs, tenv, useDef);
+	case greaterThan(): {
+		return tbool();
 	}
-	case negation(AExpr expr): {
-		// Special case: No left hand side or right hand side
-		if (typeOf(expr, tenv, useDef) == tbool()) {
-			return tbool();
-		}
+	case leq(): {
+		return tbool();
+	}
+	case geq(): {
+		return tbool();
+	}
+	case equal(): {
+		return tbool();
+	}
+	case neq(): {
+		return tbool();
+	}
+	case and(): {
+		return tbool();
+	}
+	case or(): {
+		return tbool();
 	}
 	// String Methods
 		// String concatenation is not supported
-		// Lexicographical comparison of strings is not supported
-		
-	// Boolean, String, or Integer Methods
-	case equal(AExpr lhs, AExpr rhs): {
-		lhsType = typeOf(lhs, tenv, useDef);
-		if (lhsType == typeOf(rhs, tenv, useDef)) {
-			return tbool();
-		}
-	}
-	case neq(AExpr lhs, AExpr rhs): {
-		lhsType = typeOf(lhs, tenv, useDef);
-		if (lhsType == typeOf(rhs, tenv, useDef)) {
-			return tbool();
-		}
-	}
+			
 	// Base Cases
 	case bln(bool b): {
 		return tbool();
