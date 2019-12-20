@@ -9,8 +9,7 @@ data Type
   = tint()
   | tbool()
   | tstr()
-  | tunknown()
-  ;
+  | tunknown();
 
 //Transform a data Type to a string, used for specification in error messages
 str typeToStr(Type t) {
@@ -42,20 +41,13 @@ alias TEnv = rel[loc def, str name, str label, Type \type];
 TEnv collect(AForm f) {
   result = {};
   visit(f) {
-  	case simpleQuestion(strng(str label), ref(AId id, src = loc u), AType varType, src = loc q): result = result + <q, id.name, "<label>", ATypeToDataType(varType)>;
-    case computedQuestion(strng(str label), ref(AId id, src = loc u), AType varType, AExpr e, src = loc q): result = result + <q, id.name, "<label>", ATypeToDataType(varType)>; 
+  	case simpleQuestion(strng(str label), ref(AId id, src = loc u), AType varType, src = loc q):
+  		result = result + <q, id.name, "<label>", ATypeToDataType(varType)>;
+    case computedQuestion(strng(str label), ref(AId id, src = loc u), AType varType, AExpr e, src = loc q):
+    	result = result + <q, id.name, "<label>", ATypeToDataType(varType)>; 
   }
   return result; 
 }
-
-//Check the names of questions if they aren't equal to reserved keywords
-set[Message] checkKeyWords(AId id, loc u) {
-	if (id.name in {"true", "false", "if", "else"}) {
-		return { error("<id.name> is a reserved keyword", u) };
-	}
-	return {};
-}
-
 
 //For all questions in the form, check for errors / warnings
 set[Message] check(AForm f, TEnv tenv, UseDef useDef) {
@@ -96,6 +88,15 @@ set[Message] checkQuestionAndExprType(AExpr e, Type t, TEnv tenv, UseDef useDef)
 	return msgs;
 }
 
+//Check whether the names of questions are equal to reserved keywords,
+//in which case we give an error
+set[Message] checkKeyWords(AId id, loc u) {
+	if (id.name in {"true", "false", "if", "else"}) {
+		return { error("<id.name> is a reserved keyword", u) };
+	}
+	return {};
+}
+
 // - produce an error if there are declared questions with the same name but different types.
 // - duplicate labels trigger a warning 
 // - the declared type computed questions should match the type of the expression.
@@ -104,8 +105,8 @@ set[Message] check(AQuestion q, TEnv tenv, UseDef useDef) {
   	switch(q) {  			
     	case simpleQuestion(strng(sq), ref(AId id, src = loc u), AType var, src = loc qloc): {
     		result += checkKeyWords(id, u);
-    		//Loop over all questions in the environment, except for the one we are currently verifying
     		for (<loc def, str name, str label, Type t> <- tenv) {
+    			//For all questions except for the one we are currently verifying
     			if (def != qloc) {
     				//Check for duplicate name with different type
     				result += checkName(name, id, t, var, def);
@@ -166,7 +167,8 @@ set[Message] checkExpr(set[AExpr] expr, TEnv tenv, UseDef useDef, set[Type] t, l
 		msgs += check(e, tenv, useDef);
 		typeOfE = typeOf(e, tenv, useDef);
 		if (!(typeOfE in t)) {
-			msgs += { error("Expression contains incompatible types. Got [\"<typeToStr(typeOfE)>\"] expected one of <[typeToStr(expType) | (Type expType <- t)]>", u)};
+			msgs += { error("Expression contains incompatible types. Got [\"<typeToStr(typeOfE)>\"] expected one of <[typeToStr(expType)
+				| (Type expType <- t)]>", u)};
 		}
 	}
 	return msgs;
@@ -209,6 +211,8 @@ set[Message] check(AExpr e, TEnv tenv, UseDef useDef) {
   	case geq(AExpr lhs, AExpr rhs, src = loc u): {
   		msgs += checkExpr({lhs, rhs}, tenv, useDef, {tint()}, u);
   	}
+  	//For equal(==) and neq(!=) it is possible to compare arguments of different types, 
+	//though depending on the implementation this will in (almost) all cases evaluate to false
   	case equal(AExpr lhs, AExpr rhs, src = loc u): {
   		msgs += checkExpr({lhs, rhs}, tenv, useDef, {tint(), tstr(), tbool()}, u);
   	}
@@ -292,17 +296,5 @@ Type typeOf(AExpr e, TEnv tenv, UseDef useDef) {
   return tunknown(); 
 }
 
-/* 
- * Pattern-based dispatch style:
- * 
- * Type typeOf(ref(str x, src = loc u), TEnv tenv, UseDef useDef) = t
- *   when <u, loc d> <- useDef, <d, x, _, Type t> <- tenv
- *
- * ... etc.
- * 
- * default Type typeOf(AExpr _, TEnv _, UseDef _) = tunknown();
- *
- */
- 
  
 

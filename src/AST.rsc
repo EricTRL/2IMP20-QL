@@ -5,7 +5,7 @@ module AST
  *
  */
 
-// From definition
+// Form definition
 data AForm(loc src = |tmp:///|)
     = form(str name, list[AQuestion] questions); 
 

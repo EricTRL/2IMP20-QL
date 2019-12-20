@@ -116,7 +116,7 @@ form tests {
 	goodSmallerThan: boolean = "some text" < 30
 	
 	"Is this a bad greater than"
-	goodGreaterThan: boolean = "EasterEgg" > 11
+	goodGreaterThan: boolean = EasterEgg > 11
 	
 	"Is this a bad less or equal to"
 	goodLeq: boolean = 24 <= false

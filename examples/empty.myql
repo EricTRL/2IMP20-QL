@@ -1,32 +1,3 @@
 form taxOfficeExample {
 	
-	"This will always be false" falseBoolean: integer = undefinedQuestion
-	
-	if (5 == 5) { 
-		"New shoe size?" size: integer = -8
-	} 
-	
-	if (undefinedQuestionNumberTwo + 4) {
-		"Shoe size?" size: integer = 46
-	} 
-	
-	//"last size?" size: integer = 45
-	
-	"samelabel"
-	yesWeCan: integer
-	 
-	"samelabel" yesWeCan: boolean = true
-	   
- 	//if (x < 5) {
-		//"tfy"
-		//acsd: integer 
-	//}
-	
-	"TestQuestionAddition"
-	else: integer = 5 + 3  
-	
-	if (true) {
-		"questions"
-		nope: integer = 3
-	}
-}                
+}

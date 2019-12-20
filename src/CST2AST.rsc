@@ -27,7 +27,7 @@ list[AQuestion] toList(Question* questions) {
     return [cst2ast(q) | (Question q <- questions)];
 }
     
-// Transforms a concrete question to an abstract question
+// Transforms a question in concrete syntax to a question in abstract syntax
 AQuestion cst2ast(Question q) {
     switch(q) {
         case (Question)`<Str question> <Id identifier> : <Type varType>`:
@@ -45,7 +45,7 @@ AQuestion cst2ast(Question q) {
     }
 }
 
-// Transforms an expression to an abstract expression
+// Transforms an expression in concrete syntax to an expression in abstract syntax
 AExpr cst2ast(Expr e) {
     switch (e) {
         case (Expr)`<Id x>`: return ref(id("<x>"), src=x@\loc);

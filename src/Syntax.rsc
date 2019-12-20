@@ -19,7 +19,7 @@ syntax Question
   | ifThen: "if (" Expr cond ") {" Question* questions "}";  
 
 // Concrete Syntax for Expressions and operations on those
-// Uses C/Jave-style precedence rules, and handles disambiguation using priorities and associativity
+// Uses C/Java-style precedence rules, and handles disambiguation using priorities and associativity
 syntax Expr
     = Id \ "true" \ "false" // true/false are reserved keywords.
     | bln: Bool b
