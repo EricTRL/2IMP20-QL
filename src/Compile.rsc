@@ -17,63 +17,198 @@ import lang::html5::DOM; // see standard library
  * - be sure to generate uneditable widgets for computed questions!
  * - if needed, use the name analysis to link uses to definitions
  */
-
+ 
 void compile(AForm f) {
   writeFile(f.src[extension="js"].top, form2js(f));
   writeFile(f.src[extension="html"].top, toString(form2html(f)));
 }
 
 HTML5Node form2html(AForm f) {
-  return html();
+
+    // Set the header (I.e. Make a Title and import jQuery and the JS)
+    HTML5Node head = head(  title("QL - <f.name>"),
+                            script(src("https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.4.1.min.js")),
+                            script(src("<f.src[extension="js"].top.file>")));
+    
+    bodyContent = [];
+    println("----------\nGenerating Questionaire HTML...");
+    int cnt = 0;
+    for (AQuestion q <- f.questions) {
+        bodyContent += question2html(q, "<cnt>");
+        cnt += 1;
+    }
+    println("Questionaire HTML was generated!\n");
+    
+  return html(head, body(bodyContent));
+}
+
+HTML5Node type2Widget(AType t, str widgetId, bool editable) {
+    str widgetType;
+    switch(t) {
+        case string(): {
+            widgetType = "text";
+        }
+        case boolean(): {
+            widgetType = "checkbox";
+        }
+        case integer(): {
+            widgetType = "number";
+        }
+        default: {
+            println("ERROR. Unexpected AType <t> found!");
+            return li("/* ERROR: Type could not be parsed! */");
+        }
+    }
+    
+    return editable ? input(id(widgetId), \type(widgetType)) : input(id(widgetId), \type(widgetType), disabled(""));
+}
+
+list[HTML5Node] question2html(AQuestion q, str cnt) {
+    switch(q) {           
+        case simpleQuestion(strng(sq), ref(AId id, src = loc u), AType var, src = loc qloc): {
+            println("Generating question <id.name>...");
+            return [p("<sq>", type2Widget(var, "q_<cnt>", true))]; // TODO: run JS
+        }
+        case computedQuestion(strng(sq), ref(AId id, src = loc u), AType var, AExpr e, src = loc qloc): {
+            println("Generating question <id.name>...");
+            return [p("<sq>", type2Widget(var, "q_<cnt>", false))]; // TODO: run JS
+        }
+        case ifThenElse(AExpr cond, list[AQuestion] thenpart, list[AQuestion] elsepart): { 
+            println("Generating if-then-else-block...");
+            ifElseContent = [];
+            
+            int cnt2 = 0;
+            for (AQuestion question <- thenpart) {
+                ifElseContent += question2html(question, "<cnt>_<cnt2>");
+                cnt2 += 1;
+            }
+            
+            for (AQuestion question <- elsepart) {
+                ifElseContent += question2html(question, "<cnt>_<cnt2>");
+                cnt2 += 1;
+            }
+            // TODO: run JS
+            // TODO: condition-checking
+            return ifElseContent;
+        }
+        case ifThen(AExpr cond, list[AQuestion] questions): {
+            println("Generating if-then-block...");
+            ifContent = [];
+            
+            int cnt2 = 0;
+            for (AQuestion question <- questions) {
+                ifContent += question2html(question, "<cnt>_<cnt2>");
+                cnt2 += 1;
+            }
+            return ifContent;
+            // TODO: RUN JS
+            // TODO: condition checking
+        }
+        case block(list[AQuestion] questions): { 
+            println("Generating block...");  
+            blockContent = [];
+            
+            int cnt2 = 0;
+            for (AQuestion question <- questions) {
+                blockContent += question2html(question, "<cnt>_block_<cnt2>");
+                cnt2 += 1;
+            }
+            return blockContent;
+            //MAYBE TODO: iets
+        }
+        default: {
+            println("ERROR. Unexpected AQuestion <q> found!");
+            return li("/* ERROR: Question could not be parsed! */");
+        }
+    }
 }
 
 str form2js(AForm f) {
     println("----------\nGenerating form...");
     js = "// This file was generated autmatically from the <f.name> form\n";
+    js += "$(\"document\").ready(function(){\n";
+    int cnt = 0;
     for (AQuestion q <- f.questions) {
-        js += question2js(q);
+        js += question2js(q, "<cnt>");
+        cnt += 1;
     }
+    js += "});\n";
     println("Form was generated!\n");
     return js;
 }
 
-str question2js(AQuestion q) {
+str getjsDefaultValue(AType t) {
+    switch(t) {
+        case string(): {
+            return "\"\"";
+        }
+        case boolean(): {
+            return "false";
+        }
+        case integer(): {
+            return "0";
+        }
+        default: {
+            println("ERROR. Unexpected AType <t> found!");
+            return "/* ERROR: Type could not be parsed! */";
+        }
+    }
+}
+
+str question2js(AQuestion q, str cnt) {
     switch(q) {           
         case simpleQuestion(strng(sq), ref(AId id, src = loc u), AType var, src = loc qloc): {
             println("Generating question <id.name>...");
-            return "<id.name> = 5; \n";
+            str simpleQ = "";
+            
+            simpleQ += "$(\"#q_<cnt>\").change(function() {";
+            simpleQ +=      "\talert(\"Handler for q_<cnt> called.\");";
+            simpleQ +=  "});\n";
+            
+            
+            simpleQ += "<id.name> = <getjsDefaultValue(var)>; \n";
+            return simpleQ;
         }
         case computedQuestion(strng(sq), ref(AId id, src = loc u), AType var, AExpr e, src = loc qloc): {
             println("Generating question <id.name>...");
-            return "<id.name> = 5; \n";
+            return "<id.name> = <expression2js(e)>; \n";
         }
         case ifThenElse(AExpr cond, list[AQuestion] thenpart, list[AQuestion] elsepart): { 
             println("Generating if-then-else-block...");
-            ifblock = "if (<expression2js(cond)>) { \n";
+            ifblock = ""; //"if (<expression2js(cond)>) { \n";
+            int cnt2 = 0;
             for (AQuestion question <- thenpart) {
-                ifblock += "<question2js(question)>";
+                ifblock += "<question2js(question, "<cnt>_<cnt2>")>";
+                cnt2 += 1;
             }
-            ifblock += "} else { \n";
+            //ifblock += "} else { \n";
+            
             for (AQuestion question <- elsepart) {
-                ifblock += "<question2js(question)>";
+                ifblock += "<question2js(question, "<cnt>_<cnt2>")>";
+                cnt2 += 1;
             }
-            return "<ifblock>} \n";
+            return "<ifblock>"; //} \n";
         }
         case ifThen(AExpr cond, list[AQuestion] questions): {
             println("Generating if-then-block...");
-            ifblock = "if (<expression2js(cond)>) { \n";
+            ifblock = ""; //"if (<expression2js(cond)>) { \n";
+            
+            int cnt2 = 0;
             for (AQuestion question <- questions) {
-                ifblock += "<question2js(question)>";
+                ifblock += "<question2js(question, "<cnt>_<cnt2>")>";
+                cnt2 += 1;
             }
-            return "<ifblock>} \n";
+            return "<ifblock>"; //} \n";
         }
         case block(list[AQuestion] questions): { 
             println("Generating block...");  
-            ifblock = "{ \n";
+            ifblock = ""; //"{ \n";
+            int cnt2 = 0;
             for (AQuestion question <- questions) {
-                ifblock += "<question2js(question)>";
+                ifblock += "<question2js(question, "<cnt>_<cnt2>")>";
+                cnt2 += 2;
             }
-            return "<ifblock>} \n";
+            return "<ifblock>"; //"} \n";
         }
         default: {
             println("ERROR. Unexpected AQuestion <q> found!");
@@ -136,7 +271,7 @@ str expression2js(AExpr e) {
             return "<b ? "true" : "false">";
         }   
         case strng(str s): {
-            return "\"<s>\"";
+            return "<s>";
         }   
         case intgr(int i): {
             return "<i>";

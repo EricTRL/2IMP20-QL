@@ -1,6 +1,6 @@
 form taxOfficeExample { 
   "Did you buy a house in 2010?"
-    hasBoughtHouse: boolean
+    hasBoughtHouse: string
     
    
     // akjsdhakjshdkjsa
@@ -10,7 +10,7 @@ form taxOfficeExample {
     
   "Did you sell a house in 2010?"
     hasSoldHouse: boolean
-   
+    
   if (hasSoldHouse) {
     "What was the selling price?"
       sellingPrice: integer
@@ -18,6 +18,13 @@ form taxOfficeExample {
       privateDebt: integer
     "Value residue:"
       valueResidue: integer = sellingPrice - privateDebt
-      
+      if (!hasSoldHouse || true && (hasMaintLoan)) {
+        if (hasMaintLoan) {
+            "Did you enter another lloan?"
+    hasMaintLoan2: string = "hallo jari \n ???"
+        } else {
+            "Whoa" blah: boolean = true
+        }
+      }
   }
 }
