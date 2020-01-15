@@ -3,6 +3,7 @@ module Transform
 import Syntax;
 import Resolve;
 import AST;
+import IO;
 
 /* 
  * Transforming QL forms
@@ -29,7 +30,48 @@ import AST;
  */
  
 AForm flatten(AForm f) {
-  return f; 
+	list[AQuestion] flattenedQuestions = [];
+	for (AQuestion q <- f.questions) {
+  		flattenedQuestions = flattenedQuestions + flatten(q, bln(true));
+  	} 
+  	AForm flattenedForm = form(f.name, flattenedQuestions);
+  	for (AQuestion q <- flattenedForm.questions) {
+  		println(q.cond);
+  		println();
+  	}
+	return flattenedForm; 
+}
+
+list[AQuestion] flatten(AQuestion q, AExpr guard) {
+	flattenedQuestion = [];
+	switch(q) {  			
+    	case simpleQuestion(strng(sq), ref(AId id, src = loc u), AType var, src = loc qloc): {
+    		flattenedQuestion += ifThen(guard, [q]);
+		}
+		case computedQuestion(strng(sq), ref(AId id, src = loc u), AType var, AExpr e, src = loc qloc): {
+			flattenedQuestion += ifThen(guard, [q]);
+		}
+		case ifThenElse(AExpr cond, list[AQuestion] thenpart, list[AQuestion] elsepart): { 
+			for (AQuestion question <- thenpart) {
+				flattenedQuestion += flatten(question, and(guard, cond));
+			}
+			
+			for (AQuestion question <- elsepart) {
+				flattenedQuestion += flatten(question, and(guard, negation(cond)));
+			}
+  		}
+		case ifThen(AExpr cond, list[AQuestion] questions): {
+			for (AQuestion question <- questions) {
+				flattenedQuestion += flatten(question, and(guard, cond));
+			}
+  		}
+  		case block(list[AQuestion] questions): {
+  			for (AQuestion question <- questions) {
+				flattenedQuestion += flatten(question, guard);
+			}
+  		}
+  	}
+	return flattenedQuestion;
 }
 
 /* Rename refactoring:

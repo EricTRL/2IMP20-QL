@@ -6,6 +6,7 @@ import CST2AST;
 import Resolve;
 import Check;
 import Compile;
+import Transform;
 
 import util::IDE;
 import Message;
@@ -25,7 +26,7 @@ void main() {
     annotator(Tree(Tree t) {
       if (start[Form] pt := t) {
         AForm ast = cst2ast(pt);
-        Aform flatForm = flatten(ast);
+        AForm flatForm = flatten(ast);
         UseDef useDef = resolve(ast).useDef;
         set[Message] msgs = check(ast, collect(ast), useDef);
         return t[@messages=msgs][@hyperlinks=useDef];
@@ -36,7 +37,7 @@ void main() {
     builder(set[Message] (Tree t) {
       if (start[Form] pt := t) {
         AForm ast = cst2ast(pt);
-        Aform flatForm = flatten(ast);
+        AForm flatForm = flatten(ast);
         UseDef useDef = resolve(ast).useDef;
         set[Message] msgs = check(ast, collect(ast), useDef);
         if (msgs == {}) {
