@@ -21,9 +21,9 @@ form taxOfficeExample {
       if (!hasSoldHouse || true && (hasMaintLoan)) {
         if (hasMaintLoan) {
             "Did you enter another lloan?"
-    hasMaintLoan2: string = "hallo jari \n ???"
+            hasMaintLoan2: string = "hallo jari \n ???"
         } else {
-            "Whoa" blah: boolean = true
+            "Whoa" blah: boolean = true && hasSoldHouse
         }
       }
   }
