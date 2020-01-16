@@ -82,7 +82,24 @@ list[AQuestion] flatten(AQuestion q, AExpr guard) {
  */
  
  start[Form] rename(start[Form] f, loc useOrDef, str newName, UseDef useDef) {
-   return f; 
+ 	// Stores the location where the variable is defined
+ 	loc definitionLocation = |tmp:///|;
+ 	
+ 	// Find the location where the variable is defined 
+ 	for (<useOrDef, loc def> <- useDef) {
+ 		definitionLocation = def;
+ 	}
+ 	
+ 	// If the location is still undefined, then the useOrDef itself must be the definition
+ 	if (definitionLocation == |tmp:///|) {
+ 		definitionLocation = useOrDef;
+ 	}
+ 	
+ 	// For every use, change the name to the new name
+ 	for (<loc use, definitionLocation> <- useDef) {
+ 		"";
+ 	}
+ 	return f; 
  } 
  
  
