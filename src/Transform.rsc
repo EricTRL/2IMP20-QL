@@ -35,10 +35,10 @@ AForm flatten(AForm f) {
   		flattenedQuestions = flattenedQuestions + flatten(q, bln(true));
   	} 
   	AForm flattenedForm = form(f.name, flattenedQuestions);
-  	for (AQuestion q <- flattenedForm.questions) {
-  		println(q.cond);
-  		println();
-  	}
+  	//for (AQuestion q <- flattenedForm.questions) {
+  	//	println(q.cond);
+  	//	println();
+  	//}
 	return flattenedForm; 
 }
 
