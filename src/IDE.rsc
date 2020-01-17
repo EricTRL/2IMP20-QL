@@ -7,6 +7,7 @@ import Resolve;
 import Check;
 import Compile;
 import Transform;
+import IO;
 
 import util::IDE;
 import Message;
@@ -29,6 +30,7 @@ void main() {
         AForm flatForm = flatten(ast);
         UseDef useDef = resolve(ast).useDef;
         set[Message] msgs = check(ast, collect(ast), useDef);
+		//println(ast); Uncomment to print AForm of the form, which can be used to test Eval
         return t[@messages=msgs][@hyperlinks=useDef];
       }
       return t[@messages={error("Not a form", t@\loc)}];

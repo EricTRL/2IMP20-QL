@@ -24,7 +24,6 @@ alias VEnv = map[str name, Value \value];
 data Input
   = input(str question, Value \value);
 
-
 Value getDefaultValue(AType t) {
     switch(t) {
         case string(): return vstr("");
@@ -38,7 +37,7 @@ Value getDefaultValue(AType t) {
 // produce an environment which for each question has a default value
 // (e.g. 0 for int, "" for str etc.)
 VEnv initialEnv(AForm f) {
-    result = {};
+    result = ();
     visit(f) {
         case simpleQuestion(strng(str label), ref(AId id, src = loc u), AType varType, src = loc q):
             result = result + ("<label>": getDefaultValue(varType));
@@ -54,11 +53,15 @@ VEnv initialEnv(AForm f) {
 VEnv eval(AForm f, Input inp, VEnv venv) {
   return solve (venv) {
     venv = evalOnce(f, inp, venv);
+    println(venv);
   }
 }
 
 VEnv evalOnce(AForm f, Input inp, VEnv venv) {
-  return (); 
+	for (AQuestion q <- f.questions) {
+		venv = eval(q, inp, venv);
+	}
+	return venv; 
 }
 
 VEnv eval(AQuestion q, Input inp, VEnv venv) {
