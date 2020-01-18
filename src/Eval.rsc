@@ -2,6 +2,7 @@ module Eval
 
 import AST;
 import Resolve;
+import IO;
 
 /*
  * Implement big-step semantics for QL
@@ -40,9 +41,9 @@ VEnv initialEnv(AForm f) {
     result = ();
     visit(f) {
         case simpleQuestion(strng(str label), ref(AId id, src = loc u), AType varType, src = loc q):
-            result = result + ("<label>": getDefaultValue(varType));
+            result = result + ("<id.name>": getDefaultValue(varType));
         case computedQuestion(strng(str label), ref(AId id, src = loc u), AType varType, AExpr e, src = loc q):
-            result = result + ("<label>": getDefaultValue(varType)); 
+            result = result + ("<id.name>": getDefaultValue(varType)); 
     }
     return result; 
 }
@@ -53,7 +54,6 @@ VEnv initialEnv(AForm f) {
 VEnv eval(AForm f, Input inp, VEnv venv) {
   return solve (venv) {
     venv = evalOnce(f, inp, venv);
-    println(venv);
   }
 }
 
@@ -70,33 +70,34 @@ VEnv eval(AQuestion q, Input inp, VEnv venv) {
   
   switch(q) {           
     case simpleQuestion(strng(sq), ref(AId id, src = loc u), AType var, src = loc qloc): {
-        venv += eval(q.question, inp, venv); // evaluate the expression
+    	if (q.question.s[1..-1] == inp.question) {
+        	venv[id.name] = inp.\value; // evaluate the expression
+        }
     }
     case computedQuestion(strng(sq), ref(AId id, src = loc u), AType var, AExpr e, src = loc qloc): {
-        venv += eval(q.question, inp, venv); // evaluate the expression
+        venv[id.name] = eval(e, venv); // evaluate the expression
     }
     case ifThenElse(AExpr cond, list[AQuestion] thenpart, list[AQuestion] elsepart): { 
         if (eval(cond, venv) == vbool(true)) {
             for (AQuestion question <- thenpart) {
-                venv += eval(question, inp, venv); // TODO: inp klopt hier wss niet
+                eval(question, inp, venv); 
             }
         } else {
             for (AQuestion question <- elsepart) {
-                venv += eval(question, inp, venv); // TODO: inp klopt hier wss niet
+                eval(question, inp, venv); 
             }
         }
     }
     case ifThen(AExpr cond, list[AQuestion] questions): {
         if (eval(cond, venv) == vbool(true)) {
             for (AQuestion question <- questions) {
-                venv += eval(question, inp, venv); // TODO: inp klopt hier wss niet
+                eval(question, inp, venv); 
             }
         }
     }
     case block(list[AQuestion] questions): {   
-        // TODO: Handle scoping? I.e. questions defined here do not affect the VEnv outside the block     
         for (AQuestion question <- questions) {
-            venv += eval(question, inp, venv); // TODO: inp klopt hier wss niet
+            eval(question, inp, venv); 
         }
     }
   } 
@@ -110,7 +111,7 @@ Value eval(AExpr e, VEnv venv) {
         return venv[x];
     }
     case negation(AExpr e, src = loc u): {
-        //return tbool(!eval(e, venv)); // TODO: alternative?
+        //return vbool(!eval(e, venv)); // TODO: alternative?
         return vbool(eval(e, venv) == vbool(false));
     }
     case multiplication(AExpr lhs, AExpr rhs, src = loc u): {
@@ -137,9 +138,6 @@ Value eval(AExpr e, VEnv venv) {
     case geq(AExpr lhs, AExpr rhs, src = loc u): {
         return vbool(eval(lhs, venv) >= eval(rhs, venv));
     }
-    //For equal(==) and neq(!=) it is possible to compare arguments of different types, 
-    //though depending on the implementation this will in (almost) all cases evaluate to false
-    // TODO: wss moeten we strict type checking doen. Dus int != bool != string (dus "0" != 0 != false)
     case equal(AExpr lhs, AExpr rhs, src = loc u): {
         return vbool(eval(lhs, venv) == eval(rhs, venv));    
     }
