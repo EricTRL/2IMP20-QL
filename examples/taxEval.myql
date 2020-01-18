@@ -1,0 +1,47 @@
+form taxOfficeExampleEval { 
+  "Did you buy a house in 2010?"
+    hasBoughtHouse: string
+    
+   
+    // akjsdhakjshdkjsa
+    
+  "Did you enter a loan?"
+    hasMaintLoan: boolean
+    
+  "Did you sell a house in 2010?"
+    hasSoldHouse: boolean
+    
+  if (hasSoldHouse) {
+    "What was the selling price?"
+      sellingPrice: integer
+    "Private debts for the sold house:"
+      privateDebt: integer
+    "Value residue:"
+      valueResidue: integer = sellingPrice - privateDebt
+      if (!hasSoldHouse || true && (hasMaintLoan)) {
+        if (hasMaintLoan) {
+            "Did you enter another lloan?"
+            hasMaintLoan2: string = "hallo jari \n ???"
+            "nested Question"
+            canISetThis: integer
+            "nested Question 2"
+            ICanSetThis: string
+            "Nested question 3"
+            Hello: boolean
+        } else {
+            "Whoa" blah: boolean = true && hasSoldHouse
+            "elsetest" elsevar: string 
+        }
+      }
+  }
+  
+  if (hasSoldHouse) {
+  	"somequestion"
+  	hasSoldHouse: boolean = false
+  	if (!hasSoldHouse) {
+  		"some other question" someVariable: string = "set"
+  		"opposing question"
+  		hasSoldHouse: boolean
+  	}
+  }
+}
