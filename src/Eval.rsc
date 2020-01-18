@@ -58,8 +58,8 @@ VEnv eval(AForm f, Input inp, VEnv venv) {
 }
 
 VEnv evalOnce(AForm f, Input inp, VEnv venv) {
-	for (AQuestion q <- f.questions) {
-		venv = eval(q, inp, venv);
+	visit(f) {
+		case AQuestion q: venv = eval(q, inp, venv);
 	}
 	return venv; 
 }
@@ -71,7 +71,9 @@ VEnv eval(AQuestion q, Input inp, VEnv venv) {
   switch(q) {           
     case simpleQuestion(strng(sq), ref(AId id, src = loc u), AType var, src = loc qloc): {
     	if (q.question.s[1..-1] == inp.question) {
+    		println(inp.question);
         	venv[id.name] = inp.\value; // evaluate the expression
+        	iprintln(venv);
         }
     }
     case computedQuestion(strng(sq), ref(AId id, src = loc u), AType var, AExpr e, src = loc qloc): {
@@ -115,40 +117,88 @@ Value eval(AExpr e, VEnv venv) {
         return vbool(eval(e, venv) == vbool(false));
     }
     case multiplication(AExpr lhs, AExpr rhs, src = loc u): {
-        return vint(eval(lhs, venv) * eval(rhs, venv));
+        return vint(eval(lhs, venv).n * eval(rhs, venv).n);
     }
     case division(AExpr lhs, AExpr rhs, src = loc u): {
-        return vint(eval(lhs, venv) / eval(rhs, venv));
+        return vint(eval(lhs, venv).n / eval(rhs, venv).n);
     }
     case addition(AExpr lhs, AExpr rhs, src = loc u): {
-        return vint(eval(lhs, venv) + eval(rhs, venv));
+        return vint(eval(lhs, venv).n + eval(rhs, venv).n);
     }
     case subtraction(AExpr lhs, AExpr rhs, src = loc u): {
-        return vint(eval(lhs, venv) - eval(rhs, venv));
+        return vint(eval(lhs, venv).n - eval(rhs, venv).n);
     }
     case smallerThan(AExpr lhs, AExpr rhs, src = loc u): {
-        return vbool(eval(lhs, venv) < eval(rhs, venv));
+        return vbool(eval(lhs, venv).n < eval(rhs, venv).n);
     }
     case greaterThan(AExpr lhs, AExpr rhs, src = loc u): {
-        return vbool(eval(lhs, venv) > eval(rhs, venv));
+        return vbool(eval(lhs, venv).n > eval(rhs, venv).n);
     }
     case leq(AExpr lhs, AExpr rhs, src = loc u): {
-        return vbool(eval(lhs, venv) <= eval(rhs, venv));
+        return vbool(eval(lhs, venv).n <= eval(rhs, venv).n);
     }
     case geq(AExpr lhs, AExpr rhs, src = loc u): {
-        return vbool(eval(lhs, venv) >= eval(rhs, venv));
+        return vbool(eval(lhs, venv).n >= eval(rhs, venv).n);
     }
     case equal(AExpr lhs, AExpr rhs, src = loc u): {
-        return vbool(eval(lhs, venv) == eval(rhs, venv));    
+    	valueLhs = eval(lhs, venv);
+    	valueRhs = eval(rhs, venv);
+    	switch(valueLhs) {
+    		case vbool(bool bl): {
+    			switch(valueRhs) {
+		    		case vbool(bool br): return vbool(bl == br);
+		    		case vstr(str sr): return vbool(false);
+		    		case vint(int nr): return vbool(false);
+		    	}
+    		}
+    		case vstr(str sl): {
+    			switch(valueRhs) {
+		    		case vbool(bool br): return vbool(false);
+		    		case vstr(str sr): return vbool(sl == sr);
+		    		case vint(int nr): return vbool(false);
+		    	}
+    		}
+    		case vint(int nl): {
+    			switch(valueRhs) {
+		    		case vbool(bool br): return vbool(false);
+		    		case vstr(str sr): return vbool(false);
+		    		case vint(int nr): return vbool(nl == nr);
+		    	}
+    		}
+    	}      
     }
     case neq(AExpr lhs, AExpr rhs, src = loc u): {
-        return vbool(eval(lhs, venv) != eval(rhs, venv));   
+    	valueLhs = eval(lhs, venv);
+    	valueRhs = eval(rhs, venv);
+    	switch(valueLhs) {
+    		case vbool(bool bl): {
+    			switch(valueRhs) {
+		    		case vbool(bool br): return vbool(bl != br);
+		    		case vstr(str sr): return vbool(true);
+		    		case vint(int nr): return vbool(true);
+		    	}
+    		}
+    		case vstr(str sl): {
+    			switch(valueRhs) {
+		    		case vbool(bool br): return vbool(true);
+		    		case vstr(str sr): return vbool(sl != sr);
+		    		case vint(int nr): return vbool(true);
+		    	}
+    		}
+    		case vint(int nl): {
+    			switch(valueRhs) {
+		    		case vbool(bool br): return vbool(true);
+		    		case vstr(str sr): return vbool(true);
+		    		case vint(int nr): return vbool(nl != nr);
+		    	}
+    		}
+    	}  
     }
     case and(AExpr lhs, AExpr rhs, src = loc u): {
-        return vbool(eval(lhs, venv) && eval(rhs, venv));   
+        return vbool(eval(lhs, venv).b && eval(rhs, venv).b);   
     }
     case or(AExpr lhs, AExpr rhs, src = loc u): {
-        return vbool(eval(lhs, venv) || eval(rhs, venv));   
+        return vbool(eval(lhs, venv).b || eval(rhs, venv).b);   
     }
     // String Methods
         // String concatenation is not supported  
@@ -157,7 +207,7 @@ Value eval(AExpr e, VEnv venv) {
         return vbool(b);
     }   
     case strng(str s): {
-        return vstr(s);
+        return vstr(s[1..-1]);
     }   
     case intgr(int i): {
         return vint(i);

@@ -1,0 +1,104 @@
+form testsEval {
+	"Is this a good simple integer question"
+	goodInt: integer
+	
+	"Is this a good computed integer question"
+	goodComputedInt: integer = 1 + 1 //quick maths
+	
+	"Is this a good simple boolean question"
+	goodBool: boolean
+	
+	"Is this a good computed boolean question"
+	goodComputedBool: boolean = true
+	
+	"Is this a good simple string question"
+	goodStr: string
+	
+	"Is this a good computed string question"
+	goodComputedStr: string = "good"
+	
+	//---------------------------------------------------------------------------------
+	// Good operands
+	"Is this a good negation"
+	goodNegation: boolean = !goodBool
+	
+	"Is this a good multiplication"
+	goodMul: integer = 234252 * 5467 * 394
+	
+	"Is this a good division"
+	goodDiv: integer = 20 / 5
+	
+	"Is this a good addition"
+	goodAdd: integer = 12 + 356 - 342
+	
+	"Is this a good subtraction"
+	goodSub: integer = 214353 - goodAdd
+	
+	"Is this a good smaller than"
+	goodSmallerThan: boolean = 31 < 30
+	
+	"Is this a good greater than"
+	goodGreaterThan: boolean = 34 > 36
+	
+	"Is this a good less or equal to"
+	goodLeq: boolean = 500 <= 445
+	
+	"Is this a good greater or equal to"
+	goodGeq: boolean = 4390 >= 4390
+	
+	"Is this a good integer equals integer"
+	goodIntEquals: boolean = 5 * 4 - 24 + 6 * 4 == 20
+	
+	"Is this a good string equals string"
+	goodStrEquals: boolean = "hello" == "hello"
+	
+	"Is this a good boolean equals boolean"
+	goodBlnEqual: boolean = true == true
+	
+	"Is this a good integer does not equal integer"
+	goodIntNeq: boolean = 3 != 9
+	
+	"Is this a good string does not equal string"
+	goodStrNeq: boolean = "hello" != "world"
+	
+	"Is this a good boolean does not equal boolean"
+	goodBoolNeqBool: boolean = true != false
+	
+	"Is this a good and"
+	goodAnd: boolean = true && true
+	
+	"Is this a good or"
+	goodOr: boolean = true || false
+	
+	//-----------------------------------------------------------------------------
+	
+	//For == and != it is possible to compare arguments of different types, 
+	//though  depending on the implementation this will in (almost) all cases evaluate to false
+	"Is this a bad integer equals integer"
+	goodBlnIntEquals: boolean = true == 20
+	
+	"Is this a bad string equals string"
+	goodStrIntEquals: boolean = "hello" == 1
+	
+	"Is this a bad boolean equals boolean"
+	goodStrBlnEqual: boolean = "Merry Christmas" == true
+	
+	"Is this a bad integer does not equal integer"
+	goodStrIntNeq: boolean = "idk" != 9
+	
+	"Is this a bad string does not equal string"
+	goodStrBlnNeq: boolean = "hello" != true
+	
+	"Is this a bad boolean does not equal boolean"
+	goodStrBlnNeq: boolean = "zodichtbij" != false	
+	
+	//-----------------------------------------------------------------------------
+	
+	//Same names and same types
+	"Is this a simple boolean question with the same name1"
+	sameNameBool: boolean = true
+	
+	"Is this a simple boolean question with the same name2"
+	sameNameBool: boolean = false
+	
+}
