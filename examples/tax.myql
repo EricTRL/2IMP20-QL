@@ -8,6 +8,17 @@ form taxOfficeExample {
   "Did you enter a loan?"
     hasMaintLoan: boolean
     
+    if (hasMaintLoan) {
+        "Did you really enter a loan?" hasMaintLoan: boolean
+        "Loan now?" blah: boolean = hasMaintLoan
+        if (hasMaintLoan) {
+            "REALLY!?" hasMaintLoan: boolean
+        }
+    } else {
+        "Really cool huh?" s: string
+    }
+    "Well that's lame!" reallyHasMaintLoan: boolean = hasMaintLoan
+    
   "Did you sell a house in 2010?"
     hasSoldHouse: boolean
     

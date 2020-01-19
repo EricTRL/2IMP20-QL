@@ -19,6 +19,7 @@ import lang::html5::DOM; // see standard library
  */
  
 void compile(AForm f) {
+    // Compile the QL-file to an HTML and Js file
   writeFile(f.src[extension="js"].top, form2js(f));
   writeFile(f.src[extension="html"].top, toString(form2html(f)));
 }
@@ -27,9 +28,9 @@ void compile(AForm f) {
 // HTML
 //////////////////////////////////////////////////////////////////////////////////////
 
+// Compiles a from to HTML
 HTML5Node form2html(AForm f) {
-
-    // Set the header (I.e. Make a Title and import jQuery and the JS)
+    // Set the header (I.e. Make a Title and import jQuery and the compiled JS)
     HTML5Node head = head(  title("QL - <f.name>"),
                             script(src("https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.4.1.min.js")),
                             script(src("<f.src[extension="js"].top.file>")),
@@ -38,6 +39,7 @@ HTML5Node form2html(AForm f) {
     bodyContent = [];
     println("----------\nGenerating Questionaire HTML...");
     int cnt = 0;
+    // Generate the body (based on the form's questions)
     for (AQuestion q <- f.questions) {
         bodyContent += question2html(q, "<cnt>");
         cnt += 1;
@@ -47,9 +49,11 @@ HTML5Node form2html(AForm f) {
   return html(head, body(bodyContent));
 }
 
+// Compiles a variable type to an HTML-widget and gives it a given Id
+// editable Denotes wheter the widget can be edited by the user
 HTML5Node type2Widget(str widgetId, AType t, bool editable) {
     str widgetType;
-    widgetValue = [id(widgetId)];
+    widgetValue = [id(widgetId), class("question")];
     switch(t) {
         case string(): {
             widgetType = "text";
@@ -73,32 +77,37 @@ HTML5Node type2Widget(str widgetId, AType t, bool editable) {
                     : input(widgetValue + [disabled("")]);
 }
 
+// Compiles a question to HTML
 list[HTML5Node] question2html(AQuestion q, str cnt) {
     switch(q) {           
         case simpleQuestion(strng(sq), ref(AId id, src = loc u), AType var, src = loc qloc): {
             println("Generating question <id.name>...");
-            return [p("<sq[1..-1]>", type2Widget("q_<cnt>", var, true))]; // TODO: run JS
+            return [p("<sq[1..-1]>", type2Widget("q_<cnt>", var, true))];
         }
         case computedQuestion(strng(sq), ref(AId id, src = loc u), AType var, AExpr e, src = loc qloc): {
             println("Generating question <id.name>...");
-            return [p("<sq[1..-1]>", type2Widget("q_<cnt>", var, false))]; // TODO: run JS
+            return [p("<sq[1..-1]>", type2Widget("q_<cnt>", var, false))];
         }
         case ifThenElse(AExpr cond, list[AQuestion] thenpart, list[AQuestion] elsepart): { 
             println("Generating if-then-else-block...");
             ifContent = [];
             
+            // Obtain all questions from the if-branch
             int cnt2 = 0;
             for (AQuestion question <- thenpart) {
                 ifContent += question2html(question, "<cnt>_<cnt2>");
                 cnt2 += 1;
             }
             
+            // Obtain all quesitons from the else-branch
             elseContent = [];
             for (AQuestion question <- elsepart) {
                 elseContent += question2html(question, "<cnt>_<cnt2>");
                 cnt2 += 1;
             }
             
+            // Store all questions in the if-branch in a single div,
+            // and store all questions in the else-branch in another single div
             ifElseContent = [div([id("if_q_<cnt>")] + ifContent), div([id("else_q_<cnt>")] + elseContent)];
             return ifElseContent;
         }
@@ -106,27 +115,28 @@ list[HTML5Node] question2html(AQuestion q, str cnt) {
             println("Generating if-then-block...");
             ifContent = [];
             
+            // Obtain all questions from the if-branch
             int cnt2 = 0;
             for (AQuestion question <- questions) {
                 ifContent += question2html(question, "<cnt>_<cnt2>");
                 cnt2 += 1;
             }
+            
+            // Storea all questions in the if-branch in a single div
             ifContent = [div([id("if_q_<cnt>")] + ifContent)];
             return ifContent;
-            // TODO: RUN JS
-            // TODO: condition checking
         }
         case block(list[AQuestion] questions): { 
             println("Generating block...");  
             blockContent = [];
             
+            // Obtain all questions from the block
             int cnt2 = 0;
             for (AQuestion question <- questions) {
                 blockContent += question2html(question, "<cnt>_block_<cnt2>");
                 cnt2 += 1;
             }
             return blockContent;
-            //MAYBE TODO: iets
         }
         default: {
             println("ERROR. Unexpected AQuestion <q> found!");
@@ -136,32 +146,49 @@ list[HTML5Node] question2html(AQuestion q, str cnt) {
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
-// JS
+// Javascript
 //////////////////////////////////////////////////////////////////////////////////////
 
+// Compiles a given form to Javascript
 str form2js(AForm f) {
     println("----------\nGenerating form...");
-    str updateJS = "function update() {\n";
-    updateJS += "\tconsole.log(\"Updated the Questionaire!\");\n";
-    str jqueryJS = "// This file was generated autmatically from the <f.name> form\n";
-    jqueryJS += "$(\"document\").ready(function(){\n";
+    
+    // Will contain the update function that re-evaluates the form
+    str js = "// This file was generated autmatically from the <f.name> form\n";
+    js += "$(\"document\").ready(function(){\n";
+    js += "function update() {\n";
+    js += "\tconsole.log(\"Updated the Questionaire!\");\n";
+    
+    // Generate the Js-code based on the form
     int cnt = 0;
     for (AQuestion q <- f.questions) {
-        res = question2js(q, "<cnt>");
-        jqueryJS += res.jquery;
-        updateJS += res.update;
+        js += question2js(q, "<cnt>");
         cnt += 1;
     }
-    jqueryJS += "\n\n\n";
-    updateJS += "}\n";
-    updateJS += "function setHide(id, val){";
-    updateJS += "\tif (val) {console.log(\"Hide called\" + id);$(id).addClass(\"hidden\");} else {$(id).removeClass(\"hidden\");}";
-    updateJS += "}\n";    
-    updateJS += "update();\n";
+    js += "}\n\n";
+    
+    // Create a function that hides an HTML-element (by adding a class)
+    js += "function setHide(id, val){\n";
+    js += "\tif (val) {\n";
+    js += "\t\t$(id).addClass(\"hidden\");\n";
+    js += "\t} else {\n";
+    js += "\t\t$(id).removeClass(\"hidden\");\n";
+    js += "\t}\n";
+    js += "}\n\n";    
+    
+    // Re-evaluate the form when a question answer changes
+    js += "$(\".question\").change(function() {\n";
+    js +=      "\tupdate();\n";
+    js +=  "});\n\n";
+    
+    // Evaluate the form upon load    
+    js += "update();\n";
     println("Form was generated!\n");
-    return jqueryJS + updateJS + "});\n";
+    
+    return js + "});\n";
 }
 
+// Gets the Javascript default value (in the form of a string) for a given type
 str getjsDefaultValue(AType t) {
     switch(t) {
         case string(): {
@@ -180,12 +207,14 @@ str getjsDefaultValue(AType t) {
     }
 }
 
+// Compiles getting a variable of a given type to jQuery code
 str getjsWidget(str name, AType t) {
     switch(t) {
         case string(): {
             return "$(\"<name>\").val();";
         }
         case boolean(): {
+            // Note: Checking if a checkbox is checked is done differently than for other input fields
             return "$(\"<name>\").is(\":checked\");";
         }
         case integer(): {
@@ -198,13 +227,14 @@ str getjsWidget(str name, AType t) {
     }
 }
 
-
+// Compiles setting a variable of a given type to jQuery code
 str setjsWidget(str name, AType t, str val) {
     switch(t) {
         case string(): {
             return "$(\"<name>\").val(<val>);";
         }
         case boolean(): {
+            // Note: (Un)checking a checkbox is done differently than for other input fields
             return "$(\"<name>\").prop(\"checked\", <val>);";
         }
         case integer(): {
@@ -217,89 +247,89 @@ str setjsWidget(str name, AType t, str val) {
     }
 }
 
-tuple[str jquery, str update] question2js(AQuestion q, str cnt) {
+// Compiles a given question to Js
+str question2js(AQuestion q, str cnt) {
     switch(q) {           
         case simpleQuestion(strng(sq), ref(AId id, src = loc u), AType var, src = loc qloc): {
-            println("Generating question <id.name>...");
-            str simpleQ = "";
+            println("Generating question <id.name>...");            
             
-            simpleQ += "$(\"#q_<cnt>\").change(function() {\n";
-            simpleQ +=      "\t<id.name> = <getjsWidget("#q_<cnt>", var)>\n";
-            simpleQ +=      "\tupdate();\n";
-            simpleQ +=  "});\n";
-            simpleQ += "<id.name> = <getjsDefaultValue(var)>; \n";
-            return <simpleQ, "">;
+            // Generate update-code for the question
+            str update = "\t//<sq>\n";
+            update += "\tvar <id.name> = <getjsWidget("#q_<cnt>", var)>\n"; 
+            
+            return update;
         }
         case computedQuestion(strng(sq), ref(AId id, src = loc u), AType var, AExpr e, src = loc qloc): {
             println("Generating question <id.name>...");
-            str computedQ = "";
-            str update = "";
-            
-            computedQ += "<id.name> = <expression2js(e)>; \n";
-            update += computedQ;
+                        
+            // Generate update-code for the question
+            str update = "\t//<sq[1..-1]>\n";
+            update += "\tvar <id.name> = <expression2js(e)>; \n";
             update += "\t<setjsWidget("#q_<cnt>", var, id.name)>\n";
             
-            return <computedQ, update>;
+            return update;
         }
         case ifThenElse(AExpr cond, list[AQuestion] thenpart, list[AQuestion] elsepart): { 
             println("Generating if-then-else-block...");
-            tuple[str jquery, str update] ifblock = <"", "">;
+            str ifblock = "";
             
-            ifblock.update += "if (<expression2js(cond)>) { \n";
-            ifblock.update += "\tsetHide(\"#if_q_<cnt>\", false);\n";
-            ifblock.update += "\tsetHide(\"#else_q_<cnt>\", true);\n";
+            // Show and hide the if and else branch respectively if the guard is true
+            ifblock += "if (<expression2js(cond)>) { \n";
+            ifblock += "\tsetHide(\"#if_q_<cnt>\", false);\n";
+            ifblock += "\tsetHide(\"#else_q_<cnt>\", true);\n";
             
+            // Compile all questions in the if-branch to Js
             int cnt2 = 0;
             for (AQuestion question <- thenpart) {
-                res = question2js(question, "<cnt>_<cnt2>");
-                ifblock.jquery += res.jquery;
-                ifblock.update += res.update;
+                ifblock += question2js(question, "<cnt>_<cnt2>");
                 cnt2 += 1;
             }
-            ifblock.update += "} else { \n";
-            ifblock.update += "\tsetHide(\"#if_q_<cnt>\", true);\n";
-            ifblock.update += "\tsetHide(\"#else_q_<cnt>\", false);\n";
+            ifblock += "} else { \n";
             
+            // Hide and show the if and else branch respectively if the guard is false
+            ifblock += "\tsetHide(\"#if_q_<cnt>\", true);\n";
+            ifblock += "\tsetHide(\"#else_q_<cnt>\", false);\n";
+            
+            // Compile all questions in the else-branch to Js
             for (AQuestion question <- elsepart) {
-                res = question2js(question, "<cnt>_<cnt2>");
-                ifblock.jquery += res.jquery;
-                ifblock.update += res.update;
+                ifblock += question2js(question, "<cnt>_<cnt2>");
                 cnt2 += 1;
             }
-            ifblock.update += "} \n";
+            ifblock += "} \n";
             return ifblock; 
         }
         case ifThen(AExpr cond, list[AQuestion] questions): {
             println("Generating if-then-block...");
-            tuple[str jquery, str update] ifblock = <"", "">;
+            str ifelseblock = "";
             
-            ifblock.update += "if (<expression2js(cond)>) { \n";
-            ifblock.update += "\tsetHide(\"#if_q_<cnt>\", false);\n";
+            // Show the if branch if the guard is true
+            ifelseblock += "if (<expression2js(cond)>) { \n";
+            ifelseblock += "\tsetHide(\"#if_q_<cnt>\", false);\n";
             
+            // Compile all questions in the if-branch to Js
             int cnt2 = 0;
             for (AQuestion question <- questions) {
-                res = question2js(question, "<cnt>_<cnt2>");
-                ifblock.jquery += res.jquery;
-                ifblock.update += res.update;
+                ifelseblock += question2js(question, "<cnt>_<cnt2>");
                 cnt2 += 1;
             }
-            ifblock.update += "} else { \n";
-            ifblock.update += "\tsetHide(\"#if_q_<cnt>\", true);\n";
+            ifelseblock += "} else { \n";
             
-            ifblock.update += "} \n";
-            return ifblock; //} \n";
+            // Hide the if branch if the guard is false
+            ifelseblock += "\tsetHide(\"#if_q_<cnt>\", true);\n";
+            
+            ifelseblock += "} \n";
+            return ifelseblock;
         }
         case block(list[AQuestion] questions): { 
             println("Generating block...");  
-            tuple[str jquery, str update] ifblock = <"", "">; //"{ \n";
+            str block = ""; //"{ \n";
             int cnt2 = 0;
+            // Compile all questions in the block
             for (AQuestion question <- questions) {
-                res = question2js(question, "<cnt>_<cnt2>");
-                ifblock.jquery += res.jquery;
-                ifblock.update += res.update;
+                block += question2js(question, "<cnt>_<cnt2>");
                 cnt2 += 2;
             }
-            return ifblock; //"} \n";
+            return ifblock;
         }
         default: {
             println("ERROR. Unexpected AQuestion <q> found!");
@@ -308,7 +338,7 @@ tuple[str jquery, str update] question2js(AQuestion q, str cnt) {
     }
 }
 
-
+// Compiles an expression to Js
 str expression2js(AExpr e) {
     switch (e) {
         case ref(id(str x), src = loc u): {
@@ -341,12 +371,12 @@ str expression2js(AExpr e) {
         case geq(AExpr lhs, AExpr rhs, src = loc u): {
             return "(<expression2js(lhs)> \>= <expression2js(rhs)>)";
         }
-        //For equal(==) and neq(!=) it is possible to compare arguments of different types, 
-        //though depending on the implementation this will in (almost) all cases evaluate to false
         case equal(AExpr lhs, AExpr rhs, src = loc u): {
+            // Javascript uses === for strict type checking. E.g. comparing a boolean to an integer results in false
             return "(<expression2js(lhs)> === <expression2js(rhs)>)";    
         }
         case neq(AExpr lhs, AExpr rhs, src = loc u): {
+            // Javascript uses !== for strict type checking. E.g. comparing a boolean to an integer results in true
             return "(<expression2js(lhs)> !== <expression2js(rhs)>)";   
         }
         case and(AExpr lhs, AExpr rhs, src = loc u): {
@@ -362,6 +392,7 @@ str expression2js(AExpr e) {
             return "<b ? "true" : "false">";
         }   
         case strng(str s): {
+            //Note: s already has double-quotes around it
             return "<s>";
         }   
         case intgr(int i): {
