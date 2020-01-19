@@ -35,7 +35,7 @@ Value getDefaultValue(AType t) {
 }
 
   
-// produce an environment which for each question has a default value
+// produce an environment which for each identifier has a default value
 // (e.g. 0 for int, "" for str etc.)
 VEnv initialEnv(AForm f) {
     result = ();
