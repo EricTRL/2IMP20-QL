@@ -4,6 +4,9 @@ import Syntax;
 import Resolve;
 import AST;
 import IO;
+import CST2AST;
+import ParseTree;
+import Node;
 
 /* 
  * Transforming QL forms
@@ -95,12 +98,30 @@ list[AQuestion] flatten(AQuestion q, AExpr guard) {
  		definitionLocation = useOrDef;
  	}
  	
- 	// For every use, change the name to the new name
+ 	// Store the locations where the variable is used and defined in a list
+ 	list[loc] usesAndDefs = [definitionLocation];
  	for (<loc use, definitionLocation> <- useDef) {
- 		"";
+ 		usesAndDefs += use;
  	}
+ 	
+ 	// For each variable, call method refactorId
+ 	f = visit(f) {           
+        case Id id => refactorId(id, newName, usesAndDefs)
+    }
  	return f; 
  } 
+ 
+ // If variable id is in the list of locations, we rename the Id to the new name,
+ // else we keep the old id
+ Id refactorId(Id id, str newName, list[loc] usesAndDefs) {
+	if (id@\loc in usesAndDefs) {
+		Id newId = parse(#Id, newName);
+		newId = setAnnotations(newId, ("loc": id@\loc));
+		return newId;
+	} else {
+		return id;
+	}
+ }
  
  
  

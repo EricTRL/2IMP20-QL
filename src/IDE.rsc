@@ -27,10 +27,15 @@ void main() {
     annotator(Tree(Tree t) {
       if (start[Form] pt := t) {
         AForm ast = cst2ast(pt);
-        AForm flatForm = flatten(ast);
+        AForm flatForm = flatten(ast); //Flatten ast
+        iprintln(flatForm); //Print formatted AForm which has been flattened
         UseDef useDef = resolve(ast).useDef;
+        useOrDef = [c | (<loc c, loc u> <- useDef)]; //Get all use locations
+        start[Form] newPt = rename(pt, useOrDef[0], "NewName", useDef); //Refactor variable at location useOrDef[0]
+        start[Form] newestPt = rename(newPt, useOrDef[0], "anotherName", useDef); //Refactor variable at location useOrDef[0] again
+        iprintln(unparse(newestPt)); //Print form to see whether refactoring worked
         set[Message] msgs = check(ast, collect(ast), useDef);
-		//println(ast); //Uncomment to print AForm of the form, which can be used to test Eval
+		//println(ast); //Uncomment to print AForm of the form, which can be copied and used for testing Eval
         return t[@messages=msgs][@hyperlinks=useDef];
       }
       return t[@messages={error("Not a form", t@\loc)}];
