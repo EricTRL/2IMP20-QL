@@ -1,0 +1,19 @@
+form codeExample {
+    "What is your name?" name: string
+    
+    "What is your age?" age: integer
+    
+    if (age >= 16) {
+       "Have you earned your driver's license?" license: boolean
+       
+       if (license) {
+           "At what age did you earn your driver's license?" driverAge: integer
+           
+           "You have had your driver's license for this many years: " years: integer = driverAge - age
+       }
+    } else {
+       if (age >= 14) {
+           "Don't forget that you can earn your diver's license when you're this old in the Netherlands:" minLicenseAge: integer = 16
+       }
+    }
+}
