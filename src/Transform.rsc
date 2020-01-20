@@ -7,6 +7,7 @@ import IO;
 import CST2AST;
 import ParseTree;
 import Node;
+import Exception;
 
 /* 
  * Transforming QL forms
@@ -38,10 +39,6 @@ AForm flatten(AForm f) {
   		flattenedQuestions = flattenedQuestions + flatten(q, bln(true));
   	} 
   	AForm flattenedForm = form(f.name, flattenedQuestions);
-  	//for (AQuestion q <- flattenedForm.questions) {
-  	//	println(q.cond);
-  	//	println();
-  	//}
 	return flattenedForm; 
 }
 
@@ -85,17 +82,21 @@ list[AQuestion] flatten(AQuestion q, AExpr guard) {
  */
  
  start[Form] rename(start[Form] f, loc useOrDef, str newName, UseDef useDef) {
- 	// Stores the location where the variable is defined
+    // Stores the location where the variable is defined
  	loc definitionLocation = |tmp:///|;
  	
  	// Find the location where the variable is defined 
- 	for (<useOrDef, loc def> <- useDef) {
- 		definitionLocation = def;
+ 	for (<loc use, loc def> <- useDef) {
+        // useOrDef location should approximately equal
+        if (use.offset <= useOrDef.offset && useOrDef.offset + useOrDef.length <= use.offset + use.length) {
+            definitionLocation = def;
+            break;
+        }
  	}
  	
- 	// If the location is still undefined, then the useOrDef itself must be the definition
+ 	// If the location is still undefined, then an invalid location was passed
  	if (definitionLocation == |tmp:///|) {
- 		definitionLocation = useOrDef;
+ 		throw NoSuchElement(useOrDef);
  	}
  	
  	// Store the locations where the variable is used and defined in a list
@@ -106,7 +107,7 @@ list[AQuestion] flatten(AQuestion q, AExpr guard) {
  	
  	// For each variable, call method refactorId
  	f = visit(f) {           
-        case Id id => refactorId(id, newName, usesAndDefs)
+        case Id id => refactorId(id, "<newName>", usesAndDefs)
     }
  	return f; 
  } 
@@ -114,8 +115,9 @@ list[AQuestion] flatten(AQuestion q, AExpr guard) {
  // If variable id is in the list of locations, we rename the Id to the new name,
  // else we keep the old id
  Id refactorId(Id id, str newName, list[loc] usesAndDefs) {
+    
 	if (id@\loc in usesAndDefs) {
-		Id newId = parse(#Id, newName);
+	   	Id newId = parse(#Id, "<newName>");
 		newId = setAnnotations(newId, ("loc": id@\loc));
 		return newId;
 	} else {
