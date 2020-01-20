@@ -43,6 +43,7 @@ form codeExample {
   - Duplicate question descriptions (shows a warning)
 - Flattening a questionaire (right-click in the editor)
 - Renaming a variable (right-click in the editor)
+- Compiling to Javascript/HTML (save any .ql-file and look for the generated JS/HTML files in the same directory as the .ql-file)
 
 ## Known Problems
 The following errors are not reported:
