@@ -255,7 +255,7 @@ str question2js(AQuestion q, str cnt) {
             
             // Generate update-code for the question
             str update = "\t//<sq>\n";
-            update += "\tvar <id.name> = <getjsWidget("#q_<cnt>", var)>\n"; 
+            update += "\t<id.name> = <getjsWidget("#q_<cnt>", var)>\n"; 
             
             return update;
         }
@@ -264,7 +264,7 @@ str question2js(AQuestion q, str cnt) {
                         
             // Generate update-code for the question
             str update = "\t//<sq[1..-1]>\n";
-            update += "\tvar <id.name> = <expression2js(e)>; \n";
+            update += "\t<id.name> = <expression2js(e)>; \n";
             update += "\t<setjsWidget("#q_<cnt>", var, id.name)>\n";
             
             return update;
